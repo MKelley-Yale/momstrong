@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#161513">
+<title>MOMstrong Workout</title>
+<style>
+:root{
+  --bg:#161513; --card:#211f1c; --raise:#2a2823; --ink:#e9e6e0; --sub:#9b968e;
+  --accent:#4fae97; --accent-soft:#1e332e; --gold:#d9a04f; --gold-soft:#332a1b;
+  --line:#35322d; --done:#57534b; --danger:#c25555; --radius:14px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);color-scheme:dark;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;}
+body{padding-bottom:70px;}
+header{padding:10px 14px 4px;display:flex;align-items:baseline;justify-content:space-between;}
+header h1{font-size:18px;margin:0;letter-spacing:.3px;}
+header .date{color:var(--sub);font-size:12px;}
+main{padding:4px 10px 10px;}
+.extras{display:flex;flex-wrap:wrap;gap:5px 12px;align-items:center;background:var(--card);
+  border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-bottom:8px;
+  font-size:12.5px;color:var(--sub);}
+.extras .xitem{display:flex;align-items:center;gap:4px;}
+.extras button{width:22px;height:22px;line-height:1;background:var(--raise);color:var(--ink);
+  border-radius:6px;font-size:14px;padding:0;}
+.extras b{min-width:16px;text-align:center;font-size:13px;color:var(--ink);}
+.extras input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);margin:0;}
+.extras input[type=number]{width:46px;padding:3px 4px;border:1px solid var(--line);
+  border-radius:6px;font-size:12px;font-family:inherit;background:var(--raise);color:var(--ink);}
+.extras #xsteps{width:64px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:8px 10px;margin-bottom:7px;box-shadow:0 1px 2px rgba(0,0,0,.04);position:relative;}
+.card.done{opacity:.5;background:#1d1c19;}
+.card.done .name{text-decoration:line-through;}
+.chk{position:absolute;top:9px;right:10px;width:21px;height:21px;accent-color:var(--accent);}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px;padding-right:30px;}
+.chip{font-size:10px;padding:1px 7px;border-radius:999px;background:var(--accent-soft);
+  color:var(--accent);font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
+.chip.st{background:#2c2840;color:#b3a7ea;}
+.chip.eq{background:var(--raise);color:var(--sub);}
+.name{font-size:15px;font-weight:650;margin:1px 0 2px;padding-right:30px;}
+.lastline{font-size:12px;color:var(--sub);margin:1px 0;}
+.tryline{font-size:12.5px;color:var(--accent);font-weight:600;margin:1px 0 2px;}
+.tryline.easier{color:var(--gold);}
+.vlink{display:inline-block;font-size:12px;color:var(--accent);text-decoration:none;
+  margin:2px 12px 2px 0;font-weight:600;}
+details.cues{margin:1px 0 2px;display:inline-block;vertical-align:top;}
+details.cues summary{font-size:12px;color:var(--sub);cursor:pointer;}
+details.cues ul{margin:4px 0 0;padding-left:16px;font-size:12.5px;color:var(--ink);}
+details.cues li{margin-bottom:2px;}
+details.cues.notesd{display:block;margin-left:8px;}
+details.cues.notesd summary{display:inline-block;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+button{font-family:inherit;border:none;border-radius:10px;cursor:pointer;font-size:15px;}
+.timer{margin:4px 0 1px;padding:4px 6px;background:var(--bg);border:1px solid var(--line);
+  border-radius:9px;display:flex;align-items:center;gap:7px;}
+.timer select{padding:4px 4px;border:1px solid var(--line);border-radius:7px;font-size:13px;
+  font-family:inherit;background:var(--raise);color:var(--ink);}
+.timer .tdisp{flex:1;text-align:center;font-size:17px;font-variant-numeric:tabular-nums;
+  font-weight:700;letter-spacing:.5px;}
+.timer .tdisp.running{color:var(--accent);}
+.timer button{padding:5px 11px;background:var(--raise);color:var(--ink);border:1px solid var(--line);font-size:12.5px;}
+.notesbox{width:100%;min-height:44px;font-size:12.5px;background:var(--raise);color:var(--ink);
+  border:1px solid var(--line);border-radius:8px;padding:6px;font-family:inherit;margin-top:4px;}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);}
+nav button{flex:1;padding:11px 0 9px;background:none;color:var(--sub);font-size:11px;border-radius:0;}
+/* calendar */
+.calhead{display:flex;justify-content:space-between;align-items:center;margin:2px 0 8px;}
+.calhead h3{margin:0;font-size:16px;}
+.calhead button{padding:6px 14px;background:var(--raise);color:var(--ink);border:1px solid var(--line);font-size:15px;}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.caldow{text-align:center;font-size:10px;color:var(--sub);padding-bottom:2px;}
+.calday{aspect-ratio:1;background:var(--card);border:1px solid var(--line);border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:12px;cursor:pointer;min-height:38px;}
+.calday.blank{background:transparent;border:none;cursor:default;}
+.calday.today2{border:2px solid var(--accent);}
+.calday.sel{background:var(--accent-soft);}
+.calday .cnt{font-size:10px;font-weight:700;color:#10201b;background:var(--accent);
+  border-radius:999px;padding:0 5px;margin-top:1px;line-height:14px;}
+.steprow{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--card);
+  border:1px solid var(--line);border-radius:10px;margin-bottom:5px;}
+.steprow.today3{border-color:var(--accent);}
+.steprow .sd{flex:1;font-size:14px;}
+.steprow .sd small{color:var(--sub);}
+.steprow input{width:96px;padding:6px;border:1px solid var(--line);border-radius:8px;
+  font-size:15px;font-family:inherit;background:var(--raise);color:var(--ink);text-align:right;}
+.steptotal{text-align:right;font-size:13px;color:var(--sub);margin:4px 2px;}
+.daylog{display:flex;gap:8px;align-items:baseline;padding:6px 2px;border-bottom:1px solid var(--line);font-size:13px;}
+.daylog .dn{font-weight:600;}
+.daylog .dd{color:var(--sub);font-size:12px;}
+nav button.active{color:var(--accent);font-weight:700;}
+nav button .ico{display:block;font-size:19px;margin-bottom:1px;}
+/* modal */
+#modalwrap{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:50;
+  align-items:flex-end;justify-content:center;}
+#modalwrap.show{display:flex;}
+#modal{background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:520px;
+  max-height:70vh;overflow-y:auto;padding:12px 14px 18px;position:relative;}
+#modal h2{margin:2px 0 8px;font-size:16px;padding-right:38px;}
+.mclose{position:absolute;top:8px;right:10px;width:34px;height:34px;border-radius:9px;
+  background:var(--raise);color:var(--ink);font-size:19px;line-height:1;padding:0;}
+.field{margin-bottom:8px;}
+.field label{display:block;font-size:12px;color:var(--sub);margin-bottom:3px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.4px;}
+.field input[type=number],.field input[type=text],.field select,.field textarea{
+  width:100%;padding:8px;border:1px solid var(--line);border-radius:10px;font-size:16px;
+  font-family:inherit;background:var(--raise);color:var(--ink);}
+.seg{display:flex;flex-wrap:wrap;gap:5px;}
+.seg button{padding:8px 9px;background:var(--raise);color:var(--ink);font-size:13px;flex:1 1 auto;}
+.seg button.sel{background:var(--accent);color:#10201b;font-weight:700;}
+.seg.diff button{flex:1 1 30%;}
+.mrow{display:flex;gap:8px;}
+.mrow .field{flex:1;}
+.btn-primary{background:var(--accent);color:#10201b;padding:11px 0;width:100%;font-weight:700;font-size:15px;}
+.btn-ghost{background:transparent;color:var(--sub);padding:8px 0;width:100%;font-size:14px;margin-top:4px;}
+.btn-sm{padding:6px 10px;font-size:13px;background:var(--raise);color:var(--ink);}
+.btn-danger{background:var(--danger);color:#fff;}
+h3.sec{font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--sub);margin:18px 0 8px;}
+.statcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:12px 14px;margin-bottom:10px;}
+.statcard h4{margin:0 0 6px;font-size:14px;color:var(--sub);font-weight:600;}
+.bignum{font-size:22px;font-weight:700;}
+svg.chart{width:100%;height:auto;display:block;}
+.librow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
+.librow .info{flex:1;min-width:0;}
+.librow .info .n{font-size:14.5px;font-weight:600;}
+.librow .info .d{font-size:12px;color:var(--sub);}
+.librow.hidden-mod .info{opacity:.4;}
+.bandrow{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--card);
+  border:1px solid var(--line);border-radius:10px;margin-bottom:6px;}
+.bandrow .bn{flex:1;font-size:15px;}
+.bandrow button{padding:5px 11px;background:var(--raise);color:var(--ink);font-size:14px;}
+.note{font-size:12.5px;color:var(--sub);margin:6px 0;}
+.empty{color:var(--sub);text-align:center;padding:30px 10px;font-size:14px;}
+</style>
+</head>
+<body>
+<header><h1>MOMstrong</h1><div class="date" id="hdrdate"></div></header>
+<main id="view"></main>
+<nav>
+  <button data-tab="today" class="active"><span class="ico">&#9989;</span>Today</button>
+  <button data-tab="cal"><span class="ico">&#128197;</span>Calendar</button>
+  <button data-tab="steps"><span class="ico">&#128099;</span>Steps</button>
+  <button data-tab="stats"><span class="ico">&#128200;</span>Stats</button>
+  <button data-tab="library"><span class="ico">&#128218;</span>Library</button>
+  <button data-tab="settings"><span class="ico">&#9881;&#65039;</span>Settings</button>
+</nav>
+<div id="modalwrap"><div id="modal"></div></div>
+<script>
+"use strict";
+/* ===== Muscle groups & module library ===== */
+const MUSCLES=[
+ {id:"chest",name:"Chest"},{id:"back",name:"Back"},{id:"shoulders",name:"Shoulders"},
+ {id:"biceps",name:"Biceps"},{id:"triceps",name:"Triceps"},{id:"core",name:"Core"},
+ {id:"glutes",name:"Glutes"},{id:"quads",name:"Quads"},{id:"hams",name:"Hamstrings"},
+ {id:"calves",name:"Calves"},{id:"neck",name:"Neck & Upper Back"},
+ {id:"hipflex",name:"Hip Flexors"},{id:"pelvic",name:"Pelvic Floor & Deep Core"}];
+const EQ={none:"No equipment",loop:"Loop band",handle:"Handle band",db:"Dumbbell"};
+const BUILTIN=[
+// CHEST
+{id:"ch1",m:"chest",t:"ex",name:"Push-up",eq:"none",yt:"how to do a push up proper form",
+ cues:["Body in one straight line, glutes tight","Hands slightly wider than shoulders","Lower chest to floor, elbows about 45 degrees from body","Drop to knees to make it easier"]},
+{id:"ch2",m:"chest",t:"ex",name:"Dumbbell Floor Press",eq:"db",yt:"dumbbell floor press form",
+ cues:["Lie on back, knees bent","Wrists stacked over elbows","Press up over mid-chest, lower until upper arms touch floor","Do not bounce off the floor"]},
+{id:"ch3",m:"chest",t:"ex",name:"Band Chest Press",eq:"handle",yt:"resistance band chest press standing form",
+ cues:["Anchor band behind you at chest height","Stagger stance, press handles forward","Keep shoulders down, do not shrug","Slow return - resist the band"]},
+{id:"ch4",m:"chest",t:"st",name:"Doorway Pec Stretch",eq:"none",yt:"doorway pec stretch how to",
+ cues:["Forearm on door frame, elbow at 90 degrees","Step gently through the doorway","Feel it across the chest, not in the shoulder joint","Do both sides"]},
+{id:"ch5",m:"chest",t:"st",name:"Hands-Behind-Back Chest Opener",eq:"none",yt:"standing chest opener stretch hands clasped behind back",
+ cues:["Clasp hands behind back, straighten arms","Lift hands away from body slightly","Keep chin tucked, ribs down"]},
+// BACK
+{id:"bk1",m:"back",t:"ex",name:"Bent-Over Dumbbell Row",eq:"db",yt:"bent over dumbbell row proper form",
+ cues:["Hinge at hips, flat back, chest up","Pull elbow toward hip, squeeze shoulder blade","No torso twisting or jerking","One arm supported on chair works too"]},
+{id:"bk2",m:"back",t:"ex",name:"Band Seated Row",eq:"handle",yt:"seated resistance band row form",
+ cues:["Sit tall, legs extended, band around feet","Pull handles to ribs, elbows close","Squeeze shoulder blades together","Do not round the lower back"]},
+{id:"bk3",m:"back",t:"ex",name:"Superman Hold",eq:"none",yt:"superman exercise back proper form",
+ cues:["Lie face down, lift arms and legs","Squeeze glutes and upper back","Keep neck neutral - look at floor","Hold 3-5 sec per rep"]},
+{id:"bk4",m:"back",t:"st",name:"Child's Pose",eq:"none",yt:"childs pose stretch how to",
+ cues:["Knees wide, hips back to heels","Arms long, forehead down","Breathe into the ribs and back"]},
+{id:"bk5",m:"back",t:"st",name:"Cat-Cow",eq:"none",yt:"cat cow stretch proper form",
+ cues:["On all fours, move slowly with breath","Round the whole spine up, then arch down","Let the head follow, do not crank the neck"]},
+// SHOULDERS
+{id:"sh1",m:"shoulders",t:"ex",name:"Pike Push-up",eq:"none",yt:"pike push up form shoulders",
+ cues:["Hips high in an upside-down V","Lower crown of head toward floor between hands","Elbows track back, not flared wide","Elevate feet to make harder"]},
+{id:"sh2",m:"shoulders",t:"ex",name:"Dumbbell Overhead Press",eq:"db",yt:"dumbbell overhead shoulder press standing form",
+ cues:["Ribs down, glutes tight - no low-back arch","Press straight up to lockout","Lower with control to shoulder height"]},
+{id:"sh3",m:"shoulders",t:"ex",name:"Band Lateral Raise",eq:"handle",yt:"resistance band lateral raise form",
+ cues:["Stand on band, soft elbows","Raise only to shoulder height","Lead with elbows, no shrugging"]},
+{id:"sh4",m:"shoulders",t:"st",name:"Cross-Body Shoulder Stretch",eq:"none",yt:"cross body shoulder stretch how to",
+ cues:["Pull arm across chest with other hand","Keep shoulder down away from ear","Gentle pull, both sides"]},
+{id:"sh5",m:"shoulders",t:"st",name:"Thread the Needle",eq:"none",yt:"thread the needle stretch shoulder",
+ cues:["From all fours, slide one arm under the other","Rest shoulder and ear on floor","Feel it behind the shoulder and upper back","Both sides"]},
+// BICEPS
+{id:"bi1",m:"biceps",t:"ex",name:"Dumbbell Curl",eq:"db",yt:"dumbbell bicep curl proper form",
+ cues:["Elbows pinned to sides","No swinging - if you rock, go lighter","Lower all the way down slowly"]},
+{id:"bi2",m:"biceps",t:"ex",name:"Band Curl",eq:"handle",yt:"resistance band bicep curl form",
+ cues:["Stand on band, curl handles up","Elbows stay at sides","Resist the band on the way down"]},
+{id:"bi3",m:"biceps",t:"ex",name:"Towel Isometric Curl",eq:"none",yt:"towel isometric bicep curl",
+ cues:["Step on a towel, curl and hold against it","Pull hard for 10-20 sec at 90 degrees","Keep wrist straight, breathe"]},
+{id:"bi4",m:"biceps",t:"st",name:"Wall Biceps Stretch",eq:"none",yt:"wall bicep stretch how to",
+ cues:["Palm flat on wall behind you, fingers down or back","Slowly turn body away from arm","Mild stretch in front of arm - never force","Both sides"]},
+{id:"bi5",m:"biceps",t:"st",name:"Arms-Back Clasp Biceps Stretch",eq:"none",yt:"biceps stretch hands clasped behind back palms down",
+ cues:["Clasp hands behind back, rotate palms down","Straighten and lift arms slightly","Stand tall, do not lean forward"]},
+// TRICEPS
+{id:"tr1",m:"triceps",t:"ex",name:"Chair Dip",eq:"none",yt:"chair tricep dips proper form",
+ cues:["Hands on chair edge, fingers forward","Elbows point straight back","Shoulders down - stop if pinching","Bend knees more to make easier"]},
+{id:"tr2",m:"triceps",t:"ex",name:"Dumbbell Overhead Extension",eq:"db",yt:"dumbbell overhead tricep extension form",
+ cues:["Hold one dumbbell with both hands overhead","Elbows stay by ears, do not flare","Lower behind head, press back up"]},
+{id:"tr3",m:"triceps",t:"ex",name:"Band Pressdown",eq:"handle",yt:"resistance band tricep pushdown form",
+ cues:["Anchor band high (door anchor)","Elbows pinned to sides","Press down to full lockout, slow return"]},
+{id:"tr4",m:"triceps",t:"st",name:"Overhead Triceps Stretch",eq:"none",yt:"overhead tricep stretch how to",
+ cues:["Reach one hand down your back, elbow up","Gently assist with other hand","Keep ribs down, no arching","Both sides"]},
+{id:"tr5",m:"triceps",t:"st",name:"Towel Behind-Back Stretch",eq:"none",yt:"towel shoulder tricep stretch behind back",
+ cues:["Hold towel behind back, one hand over shoulder, one below","Gently pull up then down","Move slowly, both arrangements"]},
+// CORE
+{id:"co1",m:"core",t:"ex",name:"Dead Bug",eq:"none",yt:"dead bug exercise proper form",
+ cues:["Low back gently pressed into floor the whole time","Opposite arm and leg lower slowly","Exhale as you extend","Stop when back starts to arch"]},
+{id:"co2",m:"core",t:"ex",name:"Plank",eq:"none",yt:"plank proper form",
+ cues:["Straight line ear to ankle","Glutes and quads tight","Do not let hips sag or pike","Knees down to make easier"]},
+{id:"co3",m:"core",t:"ex",name:"Band Pallof Press",eq:"handle",yt:"pallof press resistance band form",
+ cues:["Anchor band at chest height, stand sideways","Press hands straight out, resist rotation","Ribs down, breathe","Both sides"]},
+{id:"co4",m:"core",t:"st",name:"Sphinx / Cobra",eq:"none",yt:"sphinx pose cobra stretch how to",
+ cues:["Lie face down, prop on forearms (sphinx) or hands (cobra)","Keep hips on floor, glutes relaxed","Only go where back feels comfortable"]},
+{id:"co5",m:"core",t:"st",name:"Standing Side Bend",eq:"none",yt:"standing side bend stretch obliques",
+ cues:["Reach one arm overhead, lean sideways","Keep hips level, do not twist","Breathe into the stretched side","Both sides"]},
+// GLUTES
+{id:"gl1",m:"glutes",t:"ex",name:"Glute Bridge",eq:"none",yt:"glute bridge proper form",
+ cues:["Feet hip-width, heels near butt","Squeeze glutes to lift - not lower back","Ribs down at top, do not overarch","Pause 2 sec at top"]},
+{id:"gl2",m:"glutes",t:"ex",name:"Banded Lateral Walk",eq:"loop",yt:"banded lateral walk glutes form",
+ cues:["Band above knees or ankles","Quarter squat, stay low the whole time","Small controlled steps, knees pushed out"]},
+{id:"gl3",m:"glutes",t:"ex",name:"Single-Leg Glute Bridge",eq:"none",yt:"single leg glute bridge form",
+ cues:["One foot down, other leg extended","Keep hips level - do not let one side drop","Push through the heel"]},
+{id:"gl4",m:"glutes",t:"st",name:"Figure-4 Stretch",eq:"none",yt:"figure 4 glute stretch lying",
+ cues:["On back, ankle over opposite knee","Pull the bottom thigh toward chest","Keep head and shoulders down","Both sides"]},
+{id:"gl5",m:"glutes",t:"st",name:"Pigeon Stretch",eq:"none",yt:"pigeon pose stretch how to",
+ cues:["Front shin angled, back leg long","Square hips forward","Fold forward only as far as comfortable","Both sides"]},
+// QUADS
+{id:"qu1",m:"quads",t:"ex",name:"Bodyweight Squat",eq:"none",yt:"bodyweight squat proper form",
+ cues:["Feet shoulder-width, toes slightly out","Knees track over toes","Chest tall, weight in whole foot","Depth: comfortable and pain-free"]},
+{id:"qu2",m:"quads",t:"ex",name:"Goblet Squat",eq:"db",yt:"goblet squat dumbbell form",
+ cues:["Hold dumbbell at chest, elbows down","Elbows track inside knees at bottom","Heels stay down, chest up"]},
+{id:"qu3",m:"quads",t:"ex",name:"Split Squat",eq:"none",yt:"split squat proper form",
+ cues:["Long stance, front heel planted","Drop back knee straight down","Front knee tracks over toes","Hold dumbbells to progress"]},
+{id:"qu4",m:"quads",t:"st",name:"Standing Quad Stretch",eq:"none",yt:"standing quad stretch how to",
+ cues:["Pull heel to butt, knees together","Tuck pelvis under - do not arch back","Hold wall for balance","Both sides"]},
+{id:"qu5",m:"quads",t:"st",name:"Kneeling Quad / Couch Stretch",eq:"none",yt:"couch stretch quad hip flexor how to",
+ cues:["Back foot elevated on couch or wall, knee on pad","Squeeze glute of back leg, pelvis tucked","Upright torso increases stretch","Both sides"]},
+// HAMSTRINGS
+{id:"ha1",m:"hams",t:"ex",name:"Dumbbell Romanian Deadlift",eq:"db",yt:"dumbbell romanian deadlift proper form",
+ cues:["Soft knees, push hips straight back","Flat back the entire time","Lower until hamstrings pull, stand by squeezing glutes","Dumbbells stay close to legs"]},
+{id:"ha2",m:"hams",t:"ex",name:"Sliding Hamstring Curl",eq:"none",yt:"sliding hamstring curl towel form",
+ cues:["On back, heels on towel on smooth floor","Bridge hips up, slide heels out and in","Keep hips up the whole time","Bend knees less to make harder"]},
+{id:"ha3",m:"hams",t:"ex",name:"Band Good Morning",eq:"loop",yt:"banded good morning exercise form",
+ cues:["Band under feet and around back of neck or shoulders","Hinge at hips, flat back","Stand up by squeezing glutes"]},
+{id:"ha4",m:"hams",t:"st",name:"Standing Hamstring Stretch",eq:"none",yt:"standing hamstring stretch proper form",
+ cues:["Heel on low step, leg straight","Hinge from hips with flat back","Do not round the spine to reach further","Both sides"]},
+{id:"ha5",m:"hams",t:"st",name:"Lying Band Hamstring Stretch",eq:"loop",yt:"lying hamstring stretch with strap how to",
+ cues:["On back, band or towel around foot","Keep leg straight, pull gently toward you","Other leg stays down on floor","Both sides"]},
+// CALVES
+{id:"ca1",m:"calves",t:"ex",name:"Standing Calf Raise",eq:"none",yt:"standing calf raise proper form",
+ cues:["Full range: high on toes, pause at top","Lower slowly for a stretch at bottom","Single-leg to progress","Use wall for balance"]},
+{id:"ca2",m:"calves",t:"ex",name:"Dumbbell Calf Raise",eq:"db",yt:"dumbbell calf raise form",
+ cues:["Hold dumbbells at sides","Slow 2-second lowering","Stand on a step for bigger range"]},
+{id:"ca3",m:"calves",t:"st",name:"Wall Calf Stretch",eq:"none",yt:"wall calf stretch how to",
+ cues:["Back leg straight, heel down = upper calf","Bend the back knee slightly = lower calf/soleus","Hips square to wall","Both sides"]},
+{id:"ca4",m:"calves",t:"st",name:"Stair Heel Drop",eq:"none",yt:"calf stretch on stairs heel drop",
+ cues:["Ball of foot on step edge","Let heel sink slowly below step","Hold rail for balance","Both sides"]},
+// NECK & UPPER BACK
+{id:"ne1",m:"neck",t:"ex",name:"Chin Tucks",eq:"none",yt:"chin tuck exercise proper form",
+ cues:["Glide head straight back - make a double chin","Do not tilt up or down","Hold 3-5 sec each rep","Great against a wall"]},
+{id:"ne2",m:"neck",t:"ex",name:"Wall Angels",eq:"none",yt:"wall angels exercise proper form",
+ cues:["Back and head against wall, ribs down","Arms slide up and down keeping wall contact","Move only in the range you can keep contact","Slow and controlled"]},
+{id:"ne3",m:"neck",t:"ex",name:"Band Pull-Apart",eq:"handle",yt:"band pull apart proper form",
+ cues:["Arms straight at shoulder height","Pull band apart, squeeze shoulder blades","No shrugging, ribs down","Control the return"]},
+{id:"ne4",m:"neck",t:"st",name:"Upper Trap Stretch",eq:"none",yt:"upper trapezius stretch how to",
+ cues:["Ear toward shoulder, opposite arm relaxed down","Gentle hand assist only - no pulling hard","Keep both shoulders down","Both sides"]},
+{id:"ne5",m:"neck",t:"st",name:"Levator Scap Stretch",eq:"none",yt:"levator scapulae stretch how to",
+ cues:["Turn head 45 degrees, look toward armpit","Gently guide head down with hand","Keep other shoulder down","Both sides"]},
+// HIP FLEXORS
+{id:"hf1",m:"hipflex",t:"ex",name:"Banded Psoas March",eq:"loop",yt:"banded psoas march exercise form",
+ cues:["On back, band around feet","Pull one knee in while resisting with the other leg","Low back stays pressed down","Slow alternating reps"]},
+{id:"hf2",m:"hipflex",t:"ex",name:"Seated Knee Lift",eq:"none",yt:"seated knee lift hip flexor raise exercise",
+ cues:["Sit tall on a chair edge","Lift one knee as high as possible without leaning back","Hold 3-5 sec at top","Both sides"]},
+{id:"hf3",m:"hipflex",t:"st",name:"Half-Kneeling Hip Flexor Stretch",eq:"none",yt:"half kneeling hip flexor stretch proper form",
+ cues:["Tall kneel, one foot forward","Tuck pelvis and squeeze back glute FIRST","Then shift forward slightly - stretch should be in front of hip","Do not arch the low back","Both sides"]},
+{id:"hf4",m:"hipflex",t:"st",name:"Low Lunge",eq:"none",yt:"low lunge stretch how to",
+ cues:["Back knee down, hands on front thigh or floor","Sink hips forward and down gently","Keep front knee over ankle","Both sides"]},
+// PELVIC FLOOR & DEEP CORE
+{id:"pf1",m:"pelvic",t:"ex",name:"Kegels (Pelvic Floor Lifts)",eq:"none",yt:"how to do kegels correctly women",
+ cues:["Lift and squeeze like stopping urine flow, then FULLY relax","Full relax is as important as the squeeze","Do not hold breath, clench glutes, or squeeze thighs","Mix quick pulses and 5-10 sec holds"]},
+{id:"pf2",m:"pelvic",t:"ex",name:"Diaphragmatic Breathing + Heel Slides",eq:"none",yt:"diaphragmatic breathing heel slides core exercise postpartum",
+ cues:["Inhale into ribs and belly, pelvic floor relaxes","Exhale, gently draw lower belly in, then slide heel out","Low back stays neutral","Slow - the exhale drives the movement"]},
+{id:"pf3",m:"pelvic",t:"st",name:"Deep Squat Hold",eq:"none",yt:"deep squat hold pelvic floor relaxation",
+ cues:["Sink into a full deep squat, heels down if possible","Hold onto a doorway or counter for support","Breathe low and slow - let the pelvic floor relax"]},
+{id:"pf4",m:"pelvic",t:"st",name:"Happy Baby",eq:"none",yt:"happy baby pose how to",
+ cues:["On back, grab feet or shins, knees wide toward armpits","Low back stays on the floor","Slow deep breaths, relax the pelvic floor"]}
+];
+/* ===== Utils ===== */
+const $=s=>document.querySelector(s);
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function todayStr(d){d=d||new Date();const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
+function niceDate(s){const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"});}
+function shortDate(s){const[y,m,d]=s.split("-").map(Number);return (m)+"/"+d;}
+function daysBetween(a,b){const[y1,m1,d1]=a.split("-").map(Number),[y2,m2,d2]=b.split("-").map(Number);return Math.round((new Date(y2,m2-1,d2)-new Date(y1,m1-1,d1))/864e5);}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(arr,rng){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function fmtHold(sec){const m=Math.floor(sec/60),s=sec%60;return m+":"+String(s).padStart(2,"0");}
+function ytUrl(q){return "https://www.youtube.com/results?search_query="+encodeURIComponent(q);}
+
+/* ===== State ===== */
+const KEY="momstrong_v1";
+const DEFAULT_BANDS=["yellow","orange","red","green","light green","medium green","dark green","blue","purple"];
+let S;
+function freshState(){return {logs:[],days:{},extras:{},notes:{},settings:{bandOrder:DEFAULT_BANDS.slice(),bandOrderSet:false},lib:{custom:[],hidden:[],edits:{}}};}
+function load(){try{const r=localStorage.getItem(KEY);if(!r)return null;const s=JSON.parse(r);
+ s.logs=s.logs||[];s.days=s.days||{};s.extras=s.extras||{};s.notes=s.notes||{};s.settings=s.settings||{};
+ s.settings.bandOrder=s.settings.bandOrder||DEFAULT_BANDS.slice();
+ s.settings.bandOrderSet=!!s.settings.bandOrderSet;
+ s.lib=s.lib||{};s.lib.custom=s.lib.custom||[];s.lib.hidden=s.lib.hidden||[];s.lib.edits=s.lib.edits||{};
+ return s;}catch(e){return null;}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){alert("Could not save data: "+e.message);}}
+S=load()||freshState();
+
+/* library with edits/custom/hidden applied */
+function getLib(includeHidden){
+ const out=[];
+ for(const b of BUILTIN){const e=S.lib.edits[b.id];const mod=e?Object.assign({},b,e):b;
+  if(!includeHidden&&S.lib.hidden.includes(mod.id))continue;out.push(mod);}
+ for(const c of S.lib.custom){if(!includeHidden&&S.lib.hidden.includes(c.id))continue;out.push(c);}
+ return out;}
+function getMod(id){const c=S.lib.custom.find(x=>x.id===id);if(c)return c;
+ const b=BUILTIN.find(x=>x.id===id);if(!b)return null;
+ const e=S.lib.edits[id];return e?Object.assign({},b,e):b;}
+
+/* ===== History helpers ===== */
+function logsFor(modId){return S.logs.filter(l=>l.mod===modId).sort((a,b)=>a.ts-b.ts);}
+function lastLogFor(modId){const ls=logsFor(modId);return ls.length?ls[ls.length-1]:null;}
+function lastDate(pred){let best=null;for(const l of S.logs){if(pred(l)&&(!best||l.date>best))best=l.date;}return best;}
+function daysSince(dateStr,ref){return dateStr==null?Infinity:daysBetween(dateStr,ref);}
+
+/* ===== Daily selection =====
+   - 1 item per muscle: exercise or stretch
+   - stretch-favored (75/25) if that muscle's last completed stretch is 5+ days ago (or never)
+   - muscles not checked off (any item) in 3+ days float to the top tier
+   - deterministic per date, frozen once generated */
+function ensureDay(date){
+ if(S.days[date]&&S.days[date].items&&S.days[date].items.length)return S.days[date];
+ const rng=mulberry32(hashStr(date+"|momstrong"));
+ const lib=getLib(false);
+ const picks=[];
+ for(const mu of MUSCLES){
+  const exs=lib.filter(x=>x.m===mu.id&&x.t==="ex");
+  const sts=lib.filter(x=>x.m===mu.id&&x.t==="st");
+  if(!exs.length&&!sts.length)continue;
+  let type;
+  if(!exs.length)type="st";else if(!sts.length)type="ex";
+  else{
+   const stStale=daysSince(lastDate(l=>l.m===mu.id&&l.t==="st"),date)>=5;
+   type=rng()<(stStale?0.75:0.5)?"st":"ex";
+  }
+  const pool=type==="st"?sts:exs;
+  const mod=pool[Math.floor(rng()*pool.length)];
+  picks.push({mod:mod.id,m:mu.id,t:type,done:false,logId:null});
+ }
+ const overdue=[],recent=[];
+ for(const p of picks){
+  (daysSince(lastDate(l=>l.m===p.m),date)>=3?overdue:recent).push(p);
+ }
+ const items=shuffle(overdue,rng).concat(shuffle(recent,rng));
+ S.days[date]={items:items};
+ save();
+ return S.days[date];
+}
+function rerollToday(){const d=todayStr();delete S.days[d];save();ensureDay(d);render();}
+
+/* ===== Suggestion engine =====
+   exercise diff: wte, se, jr, sh, wth
+   stretch  diff: mild, strong, pain */
+const EXDIFF=[["wte","Way too easy"],["se","Somewhat easy"],["jr","Just right"],["sh","Somewhat hard"],["wth","Way too hard"]];
+const STDIFF=[["mild","Mild stretch"],["strong","Strong but comfortable"],["pain","Painful"]];
+const HOLDS=[30,60,90,120];
+function diffLabel(code){const all=EXDIFF.concat(STDIFF);const f=all.find(x=>x[0]===code);return f?f[1]:"";}
+function nextBand(color,dir){
+ const ord=S.settings.bandOrder;const i=ord.indexOf(color);
+ if(!S.settings.bandOrderSet||i<0)return null;
+ const j=i+dir;return(j>=0&&j<ord.length)?ord[j]:null;}
+function stepHold(sec,dir){
+ let i=HOLDS.indexOf(sec);if(i<0){i=HOLDS.findIndex(h=>h>=sec);if(i<0)i=HOLDS.length-1;}
+ const j=Math.min(Math.max(i+dir,0),HOLDS.length-1);return HOLDS[j];}
+
+function suggest(mod){
+ const last=lastLogFor(mod.id);
+ const sug={weight:null,reps:null,sets:null,band:null,hold:null,note:"",dir:0,last:last};
+ if(mod.t==="st"){
+  sug.hold=last&&last.hold?last.hold:30;
+  if(last){
+   if(last.diff==="mild"){const h=stepHold(sug.hold,1);if(h>sug.hold){sug.hold=h;sug.note="was mild last time - longer hold";sug.dir=1;}else{sug.note="was mild - deepen the stretch";sug.dir=1;}}
+   else if(last.diff==="pain"){const h=stepHold(sug.hold,-1);sug.hold=h;sug.note="was painful last time - ease off";sug.dir=-1;}
+  }
+  return sug;
+ }
+ // exercise
+ sug.reps=last&&last.reps?last.reps:10;
+ sug.sets=last&&last.sets?last.sets:2;
+ if(mod.eq==="db")sug.weight=last&&last.weight?last.weight:null;
+ if(mod.eq==="loop"||mod.eq==="handle")sug.band=last&&last.band?last.band:null;
+ if(!last)return sug;
+ if(last.diff==="wte"){
+  sug.dir=1;
+  if(mod.eq==="db"&&last.weight){sug.weight=last.weight+2.5;sug.note="was way too easy - weight up";}
+  else if((mod.eq==="loop"||mod.eq==="handle")&&last.band){
+   const nb=nextBand(last.band,1);
+   if(nb){sug.band=nb;sug.note="was way too easy - next band up";}
+   else{sug.reps=last.reps?last.reps+2:12;sug.note=S.settings.bandOrderSet?"was way too easy - top band, add reps":"was way too easy - add reps (set band order in Settings for band suggestions)";}
+  }
+  else{sug.reps=(last.reps||10)+2;sug.note="was way too easy - add reps";}
+ }else if(last.diff==="se"){
+  sug.dir=1;sug.reps=(last.reps||10)+1;sug.note="was somewhat easy - add a rep";
+ }else if(last.diff==="wth"){
+  sug.dir=-1;
+  if(mod.eq==="db"&&last.weight){sug.weight=Math.max(last.weight-2.5,0);sug.note="was way too hard - weight down";}
+  else if((mod.eq==="loop"||mod.eq==="handle")&&last.band){
+   const pb=nextBand(last.band,-1);
+   if(pb){sug.band=pb;sug.note="was way too hard - band down";}
+   else{sug.reps=Math.max((last.reps||10)-2,1);sug.note="was way too hard - fewer reps";}
+  }
+  else{sug.reps=Math.max((last.reps||10)-2,1);sug.note="was way too hard - fewer reps";}
+ }
+ return sug;
+}
+function lastLine(mod){
+ const l=lastLogFor(mod.id);if(!l)return "First time - no history yet";
+ const bits=[];
+ if(l.weight)bits.push(l.weight+" lb");
+ if(l.band)bits.push(l.band+" band");
+ if(l.reps)bits.push(l.reps+" reps"+(l.sets?" x "+l.sets:""));
+ if(l.hold)bits.push(fmtHold(l.hold)+" hold");
+ let s="Last ("+shortDate(l.date)+"): "+(bits.length?bits.join(", "):"done");
+ if(l.diff)s+=" - "+diffLabel(l.diff).toLowerCase();
+ return s;}
+function tryLine(mod,sug){
+ const bits=[];
+ if(sug.weight)bits.push(sug.weight+" lb");
+ if(sug.band)bits.push(sug.band+" band");
+ if(sug.reps)bits.push(sug.reps+" reps x "+(sug.sets||2));
+ if(mod.t==="st"&&sug.hold)bits.push(fmtHold(sug.hold)+" hold");
+ if(!bits.length)return null;
+ return "Try: "+bits.join(", ")+(sug.note?" ("+sug.note+")":"");}
+/* ===== Today view ===== */
+let TAB="today";
+function muscleName(id){const m=MUSCLES.find(x=>x.id===id);return m?m.name:id;}
+function getExtras(date){return S.extras[date]||{stairs:0,walk:false,yoga:false,yogaMin:"",steps:""};}
+function setExtras(date,ex){S.extras[date]=ex;save();}
+function extrasHtml(date){
+ const ex=getExtras(date);
+ let h='<div class="extras">';
+ h+='<span class="xitem">Stairs <button id="xminus">&minus;</button><b id="xstairs">'+ex.stairs+'</b><button id="xplus">+</button></span>';
+ h+='<label class="xitem"><input type="checkbox" id="xwalk"'+(ex.walk?" checked":"")+'>Walk</label>';
+ h+='<label class="xitem"><input type="checkbox" id="xyoga"'+(ex.yoga?" checked":"")+'>Yoga</label>';
+ h+='<input type="number" inputmode="numeric" id="xyogamin" placeholder="min" value="'+esc(ex.yogaMin||"")+'"'+(ex.yoga?"":' style="display:none"')+'>';
+ h+='<span class="xitem">Steps <input type="number" inputmode="numeric" id="xsteps" placeholder="&ndash;" value="'+esc(ex.steps||"")+'"></span>';
+ h+='</div>';
+ return h;
+}
+function wireExtras(date){
+ const upd=fn=>{const ex=getExtras(date);fn(ex);setExtras(date,ex);};
+ $("#xminus").onclick=()=>upd(ex=>{ex.stairs=Math.max(ex.stairs-1,0);$("#xstairs").textContent=ex.stairs;});
+ $("#xplus").onclick=()=>upd(ex=>{ex.stairs++;$("#xstairs").textContent=ex.stairs;});
+ $("#xwalk").onchange=e=>upd(ex=>{ex.walk=e.target.checked;});
+ $("#xyoga").onchange=e=>upd(ex=>{ex.yoga=e.target.checked;
+  $("#xyogamin").style.display=ex.yoga?"":"none";});
+ $("#xyogamin").onchange=e=>upd(ex=>{ex.yogaMin=e.target.value;});
+ $("#xsteps").onchange=e=>upd(ex=>{ex.steps=e.target.value;});
+}
+function renderToday(){
+ const date=todayStr();
+ $("#hdrdate").textContent=niceDate(date);
+ const day=ensureDay(date);
+ const pending=day.items.filter(i=>!i.done);
+ const doneItems=day.items.filter(i=>i.done);
+ let html=extrasHtml(date);
+ if(!pending.length&&day.items.length)html+='<div class="empty">All done today! &#127881;</div>';
+ for(const it of pending)html+=cardHtml(it,date,false);
+ for(const it of doneItems)html+=cardHtml(it,date,true);
+ if(!day.items.length)html+='<div class="empty">No modules available - check Library.</div>';
+ $("#view").innerHTML=html;
+ wireExtras(date);
+ wireTodayEvents(date);
+}
+function cardHtml(it,date,done){
+ const mod=getMod(it.mod);
+ if(!mod)return "";
+ const sug=suggest(mod);
+ const tl=done?null:tryLine(mod,sug);
+ let h='<div class="card'+(done?" done":"")+'" data-mod="'+esc(mod.id)+'">';
+ h+='<input type="checkbox" class="chk" data-chk="'+esc(mod.id)+'"'+(done?" checked":"")+'>';
+ h+='<div class="chips"><span class="chip'+(mod.t==="st"?" st":"")+'">'+(mod.t==="st"?"Stretch":"Exercise")+'</span>';
+ h+='<span class="chip'+(mod.t==="st"?" st":"")+'">'+esc(muscleName(mod.m))+'</span>';
+ h+='<span class="chip eq">'+esc(EQ[mod.eq]||mod.eq)+'</span></div>';
+ h+='<div class="name">'+esc(mod.name)+'</div>';
+ if(!done){
+  h+='<div class="lastline">'+esc(lastLine(mod))+'</div>';
+  if(tl)h+='<div class="tryline'+(sug.dir<0?" easier":"")+'">'+esc(tl)+'</div>';
+  h+='<a class="vlink" href="'+ytUrl(mod.yt||("how to "+mod.name))+'" target="_blank" rel="noopener">&#9654; how-to videos</a>';
+  if(mod.cues&&mod.cues.length){
+   h+='<details class="cues"><summary>Form cues</summary><ul>';
+   for(const c of mod.cues)h+='<li>'+esc(c)+'</li>';
+   h+='</ul></details>';
+  }
+  const nt=S.notes[mod.id]||"";
+  h+='<details class="cues notesd"'+(nt?" open":"")+'><summary>Notes'+(nt?" &#9998;":"")+'</summary>';
+  h+='<textarea class="notesbox" data-note="'+esc(mod.id)+'" placeholder="e.g. use kitchen counter, right side tighter">'+esc(nt)+'</textarea></details>';
+  if(mod.t==="st"){
+   h+='<div class="timer" data-timer="'+esc(mod.id)+'"><select data-tsel>';
+   for(const s of HOLDS)h+='<option value="'+s+'"'+(sug.hold===s?" selected":"")+'>'+fmtHold(s)+'</option>';
+   h+='</select><span class="tdisp">'+fmtHold(sug.hold||30)+'</span>';
+   h+='<button data-tstart>Start</button><button data-treset>&#8634;</button></div>';
+  }
+ }
+ h+='</div>';
+ return h;
+}
+
+/* ===== Timer (one active at a time) ===== */
+let timerInt=null,timerLeft=0,timerEl=null,timerDur=30;
+function beep(){try{const ctx=new (window.AudioContext||window.webkitAudioContext)();
+ const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+ o.frequency.value=880;g.gain.setValueAtTime(0.4,ctx.currentTime);
+ o.start();o.stop(ctx.currentTime+0.6);
+ g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.6);}catch(e){}}
+function stopTimer(){if(timerInt){clearInterval(timerInt);timerInt=null;}
+ if(timerEl){const d=timerEl.querySelector(".tdisp");if(d)d.classList.remove("running");}}
+function tickTimer(){
+ timerLeft--;
+ const d=timerEl&&timerEl.querySelector(".tdisp");
+ if(d)d.textContent=fmtHold(Math.max(timerLeft,0));
+ if(timerLeft<=0){stopTimer();beep();if(d)d.textContent="Done!";
+  if(navigator.vibrate)navigator.vibrate([200,100,200]);}}
+function wireTodayEvents(date){
+ const day=S.days[date];
+ $("#view").querySelectorAll("[data-chk]").forEach(cb=>cb.onchange=()=>{
+  const id=cb.getAttribute("data-chk");
+  const it=day&&day.items.find(x=>x.mod===id);
+  if(!it)return;
+  if(cb.checked&&!it.done)openLog(date,id);
+  else if(!cb.checked&&it.done)undoDone(date,id);
+ });
+ $("#view").querySelectorAll("[data-note]").forEach(t=>t.onchange=()=>{
+  const v=t.value.trim();
+  if(v)S.notes[t.getAttribute("data-note")]=v;
+  else delete S.notes[t.getAttribute("data-note")];
+  save();
+ });
+ $("#view").querySelectorAll(".timer").forEach(t=>{
+  const disp=t.querySelector(".tdisp");
+  const sel=t.querySelector("[data-tsel]");
+  timerDur=parseInt(sel.value);
+  sel.onchange=()=>{
+   stopTimer();timerEl=t;timerDur=parseInt(sel.value);timerLeft=timerDur;
+   disp.textContent=fmtHold(timerLeft);};
+  t.querySelector("[data-tstart]").onclick=()=>{
+   if(timerInt&&timerEl===t){stopTimer();return;}  // pause
+   stopTimer();timerEl=t;timerDur=parseInt(sel.value);
+   if(timerLeft<=0||disp.textContent==="Done!")timerLeft=timerDur;
+   disp.classList.add("running");disp.textContent=fmtHold(timerLeft);
+   timerInt=setInterval(tickTimer,1000);};
+  t.querySelector("[data-treset]").onclick=()=>{
+   stopTimer();timerEl=t;timerDur=parseInt(sel.value);
+   timerLeft=timerDur;disp.textContent=fmtHold(timerLeft);};
+ });
+}
+function undoDone(date,modId){
+ const day=S.days[date];if(!day)return;
+ const it=day.items.find(x=>x.mod===modId);if(!it)return;
+ if(it.logId)S.logs=S.logs.filter(l=>l.id!==it.logId);
+ it.done=false;it.logId=null;save();render();}
+
+/* ===== Quick-log modal ===== */
+let modalState=null;
+function openLog(date,modId){
+ const mod=getMod(modId);if(!mod)return;
+ const sug=suggest(mod);
+ modalState={date:date,mod:mod,diff:null};
+ let h='<h2>'+esc(mod.name)+'</h2>';
+ if(sug.note)h+='<div class="note">'+esc(sug.note)+'</div>';
+ if(mod.t==="ex"){
+  h+='<div class="mrow">';
+  if(mod.eq==="db")h+='<div class="field"><label>Weight (lb)</label><input type="number" inputmode="decimal" step="0.5" id="f_weight" value="'+(sug.weight!=null?sug.weight:"")+'"></div>';
+  if(mod.eq==="loop"||mod.eq==="handle"){
+   h+='<div class="field"><label>Band color</label><select id="f_band"><option value="">-</option>';
+   for(const c of S.settings.bandOrder)h+='<option'+(sug.band===c?" selected":"")+'>'+esc(c)+'</option>';
+   h+='</select></div>';
+  }
+  h+='<div class="field"><label>Reps</label><input type="number" inputmode="numeric" id="f_reps" value="'+(sug.reps!=null?sug.reps:"")+'"></div>';
+  h+='<div class="field"><label>Sets</label><input type="number" inputmode="numeric" id="f_sets" value="'+(sug.sets!=null?sug.sets:"")+'"></div>';
+  h+='</div>';
+  h+='<div class="field"><label>How did it feel?</label><div class="seg diff" id="f_diff">';
+  for(const[c,l]of EXDIFF)h+='<button data-diff="'+c+'">'+l+'</button>';
+  h+='</div></div>';
+ }else{
+  h+='<div class="field"><label>Hold time</label><div class="seg" id="f_hold">';
+  for(const s of HOLDS)h+='<button data-hold="'+s+'"'+(sug.hold===s?' class="sel"':'')+'>'+fmtHold(s)+'</button>';
+  h+='</div></div>';
+  h+='<div class="field"><label>How did it feel?</label><div class="seg diff" id="f_diff">';
+  for(const[c,l]of STDIFF)h+='<button data-diff="'+c+'">'+l+'</button>';
+  h+='</div></div>';
+ }
+ h+='<button class="btn-primary" id="f_save">Save &amp; check off</button>';
+ h+='<button class="btn-ghost" id="f_skip">Check off without details</button>';
+ showModal(h);
+ const dv=$("#f_diff");
+ if(dv)dv.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+  modalState.diff=b.getAttribute("data-diff");
+  dv.querySelectorAll("button").forEach(x=>x.classList.toggle("sel",x===b));});
+ const hv=$("#f_hold");
+ if(hv)hv.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+  hv.querySelectorAll("button").forEach(x=>x.classList.toggle("sel",x===b));});
+ $("#f_save").onclick=()=>saveLog(false);
+ $("#f_skip").onclick=()=>saveLog(true);
+}
+function saveLog(skip){
+ const{date,mod,diff}=modalState;
+ const entry={id:uid(),mod:mod.id,m:mod.m,t:mod.t,date:date,ts:Date.now(),
+  weight:null,band:null,reps:null,sets:null,hold:null,diff:null};
+ if(!skip){
+  const w=$("#f_weight"),b=$("#f_band"),r=$("#f_reps"),s=$("#f_sets"),hv=$("#f_hold");
+  if(w&&w.value)entry.weight=parseFloat(w.value);
+  if(b&&b.value)entry.band=b.value;
+  if(r&&r.value)entry.reps=parseInt(r.value);
+  if(s&&s.value)entry.sets=parseInt(s.value);
+  if(hv){const sel=hv.querySelector("button.sel");if(sel)entry.hold=parseInt(sel.getAttribute("data-hold"));}
+  entry.diff=diff;
+ }
+ S.logs.push(entry);
+ const day=S.days[date];
+ const it=day&&day.items.find(x=>x.mod===mod.id);
+ if(it){it.done=true;it.logId=entry.id;}
+ save();stopTimer();closeModal();render();
+}
+function showModal(html){
+ $("#modal").innerHTML='<button class="mclose" id="mclosebtn">&#10005;</button>'+html;
+ $("#modalwrap").classList.add("show");
+ $("#mclosebtn").onclick=closeModal;
+ $("#modal").scrollTop=0;}
+function closeModal(){$("#modalwrap").classList.remove("show");$("#modal").innerHTML="";modalState=null;render();}
+$("#modalwrap").addEventListener("click",e=>{if(e.target.id==="modalwrap")closeModal();});
+/* ===== Calendar ===== */
+let CAL_Y=null,CAL_M=null,CAL_SEL=null;
+function logBits(l){
+ const bits=[];
+ if(l.weight)bits.push(l.weight+" lb");
+ if(l.band)bits.push(l.band+" band");
+ if(l.reps)bits.push(l.reps+" reps"+(l.sets?" x "+l.sets:""));
+ if(l.hold)bits.push(fmtHold(l.hold)+" hold");
+ if(l.diff)bits.push(diffLabel(l.diff).toLowerCase());
+ return bits.join(", ");}
+function renderCal(){
+ const now=new Date();
+ if(CAL_Y===null){CAL_Y=now.getFullYear();CAL_M=now.getMonth();}
+ const first=new Date(CAL_Y,CAL_M,1);
+ const daysInMonth=new Date(CAL_Y,CAL_M+1,0).getDate();
+ const startDow=first.getDay(); // 0=Sun
+ const counts={};
+ for(const l of S.logs)counts[l.date]=(counts[l.date]||0)+1;
+ const today=todayStr();
+ let h='<div class="calhead"><button id="calprev">&#8249;</button>';
+ h+='<h3>'+first.toLocaleDateString(undefined,{month:"long",year:"numeric"})+'</h3>';
+ h+='<button id="calnext">&#8250;</button></div>';
+ h+='<div class="calgrid">';
+ for(const d of ["S","M","T","W","T","F","S"])h+='<div class="caldow">'+d+'</div>';
+ for(let i=0;i<startDow;i++)h+='<div class="calday blank"></div>';
+ for(let d=1;d<=daysInMonth;d++){
+  const ds=CAL_Y+"-"+String(CAL_M+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+  const n=counts[ds]||0;
+  const cls="calday"+(ds===today?" today2":"")+(ds===CAL_SEL?" sel":"");
+  h+='<div class="'+cls+'" data-cday="'+ds+'"><span>'+d+'</span>'+(n?'<span class="cnt">'+n+'</span>':'')+'</div>';
+ }
+ h+='</div>';
+ if(CAL_SEL){
+  const logs=S.logs.filter(l=>l.date===CAL_SEL).sort((a,b)=>a.ts-b.ts);
+  h+='<h3 class="sec">'+niceDate(CAL_SEL)+' - '+logs.length+' checked off</h3>';
+  if(!logs.length)h+='<div class="note">Nothing checked off this day.</div>';
+  for(const l of logs){
+   const mod=getMod(l.mod);
+   h+='<div class="daylog"><span class="dn">'+esc(mod?mod.name:l.mod)+'</span>';
+   h+='<span class="dd">'+esc(muscleName(l.m))+(logBits(l)?" &middot; "+esc(logBits(l)):"")+'</span></div>';
+  }
+  const dex=S.extras[CAL_SEL];
+  if(dex&&(dex.stairs||dex.walk||dex.yoga||dex.hinge||dex.steps)){
+   const xb=[];
+   if(dex.stairs)xb.push(dex.stairs+" stair set"+(dex.stairs>1?"s":""));
+   if(dex.walk)xb.push("walk");
+   if(dex.yoga)xb.push("yoga"+(dex.yogaMin?" "+dex.yogaMin+" min":""));
+   if(dex.steps)xb.push(dex.steps+" steps");
+   if(dex.hinge)xb.push("Hinge Health");
+   h+='<div class="daylog"><span class="dn">Also</span><span class="dd">'+esc(xb.join(", "))+'</span></div>';
+  }
+ }else{
+  h+='<div class="note" style="text-align:center;margin-top:10px">Tap a day to see what was done.</div>';
+ }
+ $("#view").innerHTML=h;
+ $("#calprev").onclick=()=>{CAL_M--;if(CAL_M<0){CAL_M=11;CAL_Y--;}CAL_SEL=null;renderCal();};
+ $("#calnext").onclick=()=>{CAL_M++;if(CAL_M>11){CAL_M=0;CAL_Y++;}CAL_SEL=null;renderCal();};
+ $("#view").querySelectorAll("[data-cday]").forEach(c=>c.onclick=()=>{
+  CAL_SEL=c.getAttribute("data-cday");renderCal();});
+}
+
+/* ===== Steps week entry ===== */
+let STEP_OFF=0; // weeks back from current (0 = this week)
+function renderSteps(){
+ const now=new Date();
+ const dow=(now.getDay()+6)%7; // 0=Mon
+ const mon=new Date(now.getFullYear(),now.getMonth(),now.getDate()-dow-7*STEP_OFF);
+ const sun=new Date(mon);sun.setDate(sun.getDate()+6);
+ const today=todayStr();
+ let total=0,anyBlank=false;
+ let h='<div class="calhead"><button id="stprev">&#8249;</button>';
+ h+='<h3>'+mon.toLocaleDateString(undefined,{month:"short",day:"numeric"})+' &ndash; '+sun.toLocaleDateString(undefined,{month:"short",day:"numeric"})+'</h3>';
+ h+='<button id="stnext"'+(STEP_OFF===0?" disabled":"")+'>&#8250;</button></div>';
+ for(let i=0;i<7;i++){
+  const d=new Date(mon);d.setDate(d.getDate()+i);
+  const ds=todayStr(d);
+  const ex=S.extras[ds];
+  const val=ex&&ex.steps?ex.steps:"";
+  if(val)total+=parseInt(val)||0;else anyBlank=true;
+  const future=ds>today;
+  h+='<div class="steprow'+(ds===today?" today3":"")+'">';
+  h+='<span class="sd">'+d.toLocaleDateString(undefined,{weekday:"short"})+' <small>'+shortDate(ds)+'</small>'+(ds===today?' <small>(today)</small>':'')+'</span>';
+  h+='<input type="number" inputmode="numeric" placeholder="&ndash;" data-sday="'+ds+'" value="'+esc(val)+'"'+(future?" disabled":"")+'>';
+  h+='</div>';
+ }
+ h+='<div class="steptotal">Week total: '+total.toLocaleString()+(anyBlank?" (some days blank)":"")+'</div>';
+ h+='<div class="note">Enter each day\'s total from Apple Health (see STEPS-SHORTCUT.md for the one-tap helper). Saves as you go.</div>';
+ $("#view").innerHTML=h;
+ $("#stprev").onclick=()=>{STEP_OFF++;renderSteps();};
+ $("#stnext").onclick=()=>{if(STEP_OFF>0){STEP_OFF--;renderSteps();}};
+ $("#view").querySelectorAll("[data-sday]").forEach(inp=>inp.onchange=()=>{
+  const ds=inp.getAttribute("data-sday");
+  const ex=S.extras[ds]||{stairs:0,walk:false,yoga:false,yogaMin:"",steps:""};
+  ex.steps=inp.value.trim();
+  S.extras[ds]=ex;save();
+  // update total in place so tapping between boxes doesn't lose focus
+  let tot=0,blank=false;
+  $("#view").querySelectorAll("[data-sday]").forEach(x=>{if(x.value)tot+=parseInt(x.value)||0;else blank=true;});
+  $(".steptotal").innerHTML="Week total: "+tot.toLocaleString()+(blank?" (some days blank)":"");
+ });
+}
+
+/* ===== Stats ===== */
+let STATS_M="chest";
+function lineChart(pts,unit,fmt){
+ // pts: [{date,y}] sorted
+ if(pts.length<2)return '<div class="note">Need 2+ logged sessions to draw a chart.</div>';
+ fmt=fmt||(v=>v);
+ const W=320,H=140,P=28;
+ let ymin=Math.min(...pts.map(p=>p.y)),ymax=Math.max(...pts.map(p=>p.y));
+ if(ymin===ymax){ymin-=1;ymax+=1;}
+ const pad=(ymax-ymin)*0.12;ymin-=pad;ymax+=pad;
+ const X=i=>P+ i*(W-P-8)/(pts.length-1);
+ const Y=v=>H-P+ (v-ymin)*(P+14-H)/(ymax-ymin);
+ let path="";
+ pts.forEach((p,i)=>{path+=(i?"L":"M")+X(i).toFixed(1)+" "+Y(p.y).toFixed(1)+" ";});
+ let dots="";
+ pts.forEach((p,i)=>{dots+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(p.y).toFixed(1)+'" r="3.5" fill="#4fae97"/>';});
+ return '<svg class="chart" viewBox="0 0 '+W+' '+H+'">'+
+  '<line x1="'+P+'" y1="'+(H-P)+'" x2="'+(W-8)+'" y2="'+(H-P)+'" stroke="#35322d"/>'+
+  '<text x="'+(P-4)+'" y="'+(Y(ymax-pad)+4)+'" font-size="10" fill="#9b968e" text-anchor="end">'+fmt(Math.round((ymax-pad)*10)/10)+'</text>'+
+  '<text x="'+(P-4)+'" y="'+(Y(ymin+pad)+4)+'" font-size="10" fill="#9b968e" text-anchor="end">'+fmt(Math.round((ymin+pad)*10)/10)+'</text>'+
+  '<path d="'+path+'" fill="none" stroke="#4fae97" stroke-width="2"/>'+dots+
+  '<text x="'+P+'" y="'+(H-8)+'" font-size="10" fill="#9b968e">'+shortDate(pts[0].date)+'</text>'+
+  '<text x="'+(W-8)+'" y="'+(H-8)+'" font-size="10" fill="#9b968e" text-anchor="end">'+shortDate(pts[pts.length-1].date)+'</text>'+
+  '<text x="'+(W-8)+'" y="14" font-size="10" fill="#9b968e" text-anchor="end">'+esc(unit)+'</text></svg>';
+}
+function weekChart(muscle){
+ // distinct days per week, last 8 weeks (weeks start Monday)
+ const now=new Date();const day=(now.getDay()+6)%7; // 0=Mon
+ const thisMon=new Date(now.getFullYear(),now.getMonth(),now.getDate()-day);
+ const weeks=[];
+ for(let w=7;w>=0;w--){
+  const start=new Date(thisMon);start.setDate(start.getDate()-7*w);
+  const end=new Date(start);end.setDate(end.getDate()+6);
+  const s=todayStr(start),e=todayStr(end);
+  const days=new Set(S.logs.filter(l=>l.m===muscle&&l.date>=s&&l.date<=e).map(l=>l.date));
+  weeks.push({label:shortDate(s),n:days.size});
+ }
+ const W=320,H=110,P=24,bw=(W-P-10)/8;
+ let bars="",labs="";
+ weeks.forEach((wk,i)=>{
+  const h=wk.n/7*(H-P-18);
+  const x=P+i*bw+3,y=H-P-h;
+  bars+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+(bw-6).toFixed(1)+'" height="'+Math.max(h,1).toFixed(1)+'" rx="3" fill="'+(wk.n?"#4fae97":"#35322d")+'"/>';
+  if(wk.n)bars+='<text x="'+(x+(bw-6)/2).toFixed(1)+'" y="'+(y-3).toFixed(1)+'" font-size="9" fill="#e9e6e0" text-anchor="middle">'+wk.n+'</text>';
+  labs+='<text x="'+(x+(bw-6)/2).toFixed(1)+'" y="'+(H-P+11)+'" font-size="8" fill="#9b968e" text-anchor="middle">'+wk.label+'</text>';
+ });
+ return '<svg class="chart" viewBox="0 0 '+W+' '+H+'"><line x1="'+P+'" y1="'+(H-P)+'" x2="'+(W-8)+'" y2="'+(H-P)+'" stroke="#35322d"/>'+bars+labs+'</svg>';
+}
+function renderStats(){
+ let h='<div class="field"><label>Muscle group</label><select id="statsel">';
+ for(const mu of MUSCLES)h+='<option value="'+mu.id+'"'+(STATS_M===mu.id?" selected":"")+'>'+esc(mu.name)+'</option>';
+ h+='</select></div>';
+ const logs=S.logs.filter(l=>l.m===STATS_M).sort((a,b)=>a.ts-b.ts);
+ const last=logs.length?logs[logs.length-1].date:null;
+ const days=new Set(logs.map(l=>l.date)).size;
+ h+='<div class="statcard"><div class="row" style="justify-content:space-between">';
+ h+='<div><h4>Total days</h4><div class="bignum">'+days+'</div></div>';
+ h+='<div><h4>Total check-offs</h4><div class="bignum">'+logs.length+'</div></div>';
+ h+='<div><h4>Last done</h4><div class="bignum" style="font-size:15px">'+(last?niceDate(last):"never")+'</div></div>';
+ h+='</div></div>';
+ h+='<div class="statcard"><h4>Days targeted per week (last 8 weeks)</h4>'+weekChart(STATS_M)+'</div>';
+ const wpts=logs.filter(l=>l.weight!=null).map(l=>({date:l.date,y:l.weight}));
+ h+='<div class="statcard"><h4>Weight over time</h4>'+lineChart(wpts,"lb")+'</div>';
+ const rpts=logs.filter(l=>l.reps!=null).map(l=>({date:l.date,y:l.reps}));
+ h+='<div class="statcard"><h4>Reps over time</h4>'+lineChart(rpts,"reps")+'</div>';
+ const hpts=logs.filter(l=>l.hold!=null).map(l=>({date:l.date,y:l.hold}));
+ h+='<div class="statcard"><h4>Stretch hold over time</h4>'+lineChart(hpts,"sec")+'</div>';
+ const bl=logs.filter(l=>l.band).slice(-1)[0];
+ if(bl)h+='<div class="note">Most recent band: '+esc(bl.band)+' ('+shortDate(bl.date)+')</div>';
+ $("#view").innerHTML=h;
+ $("#statsel").onchange=e=>{STATS_M=e.target.value;renderStats();};
+}
+
+/* ===== Library ===== */
+function renderLibrary(){
+ let h='<div class="note">Tap a module to edit it. Hidden modules are never picked for the daily list.</div>';
+ for(const mu of MUSCLES){
+  h+='<h3 class="sec">'+esc(mu.name)+'</h3>';
+  const mods=getLib(true).filter(x=>x.m===mu.id);
+  for(const mod of mods){
+   const hid=S.lib.hidden.includes(mod.id);
+   h+='<div class="librow'+(hid?" hidden-mod":"")+'">';
+   h+='<div class="info" data-edit="'+esc(mod.id)+'"><div class="n">'+esc(mod.name)+'</div>';
+   h+='<div class="d">'+(mod.t==="st"?"Stretch":"Exercise")+' &middot; '+esc(EQ[mod.eq]||mod.eq)+'</div></div>';
+   h+='<button class="btn-sm" data-hide="'+esc(mod.id)+'">'+(hid?"Unhide":"Hide")+'</button></div>';
+  }
+  h+='<button class="btn-sm" style="margin-top:6px" data-add="'+mu.id+'">+ Add to '+esc(mu.name)+'</button>';
+ }
+ $("#view").innerHTML=h;
+ $("#view").querySelectorAll("[data-hide]").forEach(b=>b.onclick=()=>{
+  const id=b.getAttribute("data-hide");
+  const i=S.lib.hidden.indexOf(id);
+  if(i>=0)S.lib.hidden.splice(i,1);else S.lib.hidden.push(id);
+  save();renderLibrary();});
+ $("#view").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openModEditor(b.getAttribute("data-edit"),null));
+ $("#view").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>openModEditor(null,b.getAttribute("data-add")));
+}
+function openModEditor(id,muscle){
+ const mod=id?getMod(id):{id:null,m:muscle,t:"ex",eq:"none",name:"",cues:[],yt:""};
+ let h='<h2>'+(id?"Edit module":"New module")+'</h2>';
+ h+='<div class="field"><label>Name</label><input type="text" id="e_name" value="'+esc(mod.name)+'"></div>';
+ h+='<div class="mrow"><div class="field"><label>Type</label><select id="e_type"><option value="ex"'+(mod.t==="ex"?" selected":"")+'>Exercise</option><option value="st"'+(mod.t==="st"?" selected":"")+'>Stretch</option></select></div>';
+ h+='<div class="field"><label>Equipment</label><select id="e_eq">';
+ for(const k in EQ)h+='<option value="'+k+'"'+(mod.eq===k?" selected":"")+'>'+EQ[k]+'</option>';
+ h+='</select></div></div>';
+ h+='<div class="field"><label>Muscle</label><select id="e_m">';
+ for(const mu of MUSCLES)h+='<option value="'+mu.id+'"'+(mod.m===mu.id?" selected":"")+'>'+esc(mu.name)+'</option>';
+ h+='</select></div>';
+ h+='<div class="field"><label>Form cues (one per line)</label><textarea id="e_cues" rows="3">'+esc((mod.cues||[]).join("\n"))+'</textarea></div>';
+ h+='<div class="field"><label>YouTube search phrase</label><input type="text" id="e_yt" value="'+esc(mod.yt||"")+'"></div>';
+ h+='<button class="btn-primary" id="e_save">Save</button>';
+ if(id&&S.lib.custom.some(c=>c.id===id))h+='<button class="btn-ghost btn-danger" style="color:#fff" id="e_del">Delete custom module</button>';
+ showModal(h);
+ $("#e_save").onclick=()=>{
+  const data={name:$("#e_name").value.trim()||"Unnamed",t:$("#e_type").value,eq:$("#e_eq").value,
+   m:$("#e_m").value,cues:$("#e_cues").value.split("\n").map(x=>x.trim()).filter(Boolean),
+   yt:$("#e_yt").value.trim()};
+  if(!id){data.id="cu_"+uid();S.lib.custom.push(data);}
+  else{
+   const ci=S.lib.custom.findIndex(c=>c.id===id);
+   if(ci>=0)S.lib.custom[ci]=Object.assign({id:id},data);
+   else S.lib.edits[id]=data;
+  }
+  save();closeModal();render();};
+ const del=$("#e_del");
+ if(del)del.onclick=()=>{if(confirm("Delete this module?")){S.lib.custom=S.lib.custom.filter(c=>c.id!==id);save();closeModal();render();}};
+}
+
+/* ===== Settings ===== */
+function renderSettings(){
+ let h="";
+ h+='<h3 class="sec">Band difficulty order (easiest &rarr; hardest)</h3>';
+ h+='<div class="note">Order bands easiest to hardest and tap Save order - "way too easy" then auto-suggests the next band up.</div>';
+ h+='<div id="bandlist">';
+ S.settings.bandOrder.forEach((c,i)=>{
+  h+='<div class="bandrow"><span class="bn">'+(i+1)+'. '+esc(c)+'</span>';
+  h+='<button data-bup="'+i+'">&#9650;</button><button data-bdn="'+i+'">&#9660;</button><button data-bx="'+i+'">&#10005;</button></div>';
+ });
+ h+='</div><div class="row"><input type="text" id="newband" placeholder="add band color" style="flex:1;padding:9px;border:1px solid var(--line);border-radius:10px;font-size:15px">';
+ h+='<button class="btn-sm" id="addband">Add</button></div>';
+ h+='<button class="btn-primary" style="margin-top:10px" id="saveorder">Save order</button>';
+ h+='<h3 class="sec">Today</h3>';
+ h+='<button class="btn-sm" id="reroll">Re-roll today\'s list</button><div class="note">Generates a new random selection for today. Completed items stay logged.</div>';
+ h+='<h3 class="sec">Backup</h3>';
+ h+='<div class="note">iPhone can clear browser data. Back up regularly - it saves a small file you can restore from.</div>';
+ h+='<div class="row"><button class="btn-sm" id="exportbtn">Export backup</button>';
+ h+='<button class="btn-sm" id="importbtn">Restore from backup</button></div>';
+ h+='<input type="file" id="importfile" accept=".json,application/json" style="display:none">';
+ h+='<h3 class="sec">Danger zone</h3>';
+ h+='<button class="btn-sm btn-danger" id="wipe">Erase all data</button>';
+ $("#view").innerHTML=h;
+ const reorder=()=>{save();renderSettings();};
+ $("#view").querySelectorAll("[data-bup]").forEach(b=>b.onclick=()=>{const i=+b.getAttribute("data-bup");if(i>0){const o=S.settings.bandOrder;[o[i-1],o[i]]=[o[i],o[i-1]];reorder();}});
+ $("#view").querySelectorAll("[data-bdn]").forEach(b=>b.onclick=()=>{const i=+b.getAttribute("data-bdn");const o=S.settings.bandOrder;if(i<o.length-1){[o[i+1],o[i]]=[o[i],o[i+1]];reorder();}});
+ $("#view").querySelectorAll("[data-bx]").forEach(b=>b.onclick=()=>{S.settings.bandOrder.splice(+b.getAttribute("data-bx"),1);reorder();});
+ $("#addband").onclick=()=>{const v=$("#newband").value.trim().toLowerCase();if(v&&!S.settings.bandOrder.includes(v)){S.settings.bandOrder.push(v);reorder();}};
+ $("#saveorder").onclick=()=>{S.settings.bandOrderSet=true;save();renderSettings();};
+ $("#reroll").onclick=()=>{if(confirm("Re-roll today's list?"))rerollToday();};
+ $("#exportbtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(S)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="momstrong-backup-"+todayStr()+".json";a.click();};
+ $("#importbtn").onclick=()=>$("#importfile").click();
+ $("#importfile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const s=JSON.parse(r.result);
+   if(!s.logs||!s.settings)throw new Error("not a MOMstrong backup");
+   S=s;save();alert("Restored!");render();}catch(err){alert("Restore failed: "+err.message);}};
+  r.readAsText(f);};
+ $("#wipe").onclick=()=>{if(confirm("Erase ALL logs and settings? Export a backup first!")&&confirm("Really erase everything?")){S=freshState();save();render();}};
+}
+
+/* ===== Nav, init ===== */
+function render(){
+ if(TAB==="today")renderToday();
+ else if(TAB==="cal")renderCal();
+ else if(TAB==="steps")renderSteps();
+ else if(TAB==="stats")renderStats();
+ else if(TAB==="library")renderLibrary();
+ else renderSettings();
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ TAB=b.getAttribute("data-tab");
+ document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));
+ stopTimer();render();});
+render();
+</script>
+</body>
+</html>
