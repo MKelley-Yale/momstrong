@@ -41,6 +41,12 @@ main{padding:4px 10px 10px;}
   color:var(--accent);font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
 .chip.st{background:#2c2840;color:#b3a7ea;}
 .chip.eq{background:var(--raise);color:var(--sub);}
+.chip.bs{background:#3a3320;color:#e0bf6a;}
+.checkline{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;
+  padding:9px 10px;margin-bottom:8px;border:1px solid var(--line);border-radius:10px;background:var(--raise);}
+.checkline input{width:18px;height:18px;flex:none;}
+.checkline b{white-space:nowrap;}
+.checkline span{font-weight:400;color:var(--sub);font-size:12px;}
 .name{font-size:15px;font-weight:650;margin:1px 0 2px;padding-right:30px;}
 .lastline{font-size:12px;color:var(--sub);margin:1px 0;}
 .tryline{font-size:12.5px;color:var(--accent);font-weight:600;margin:1px 0 2px;}
@@ -114,6 +120,7 @@ nav button .ico{display:block;font-size:19px;margin-bottom:1px;}
 .seg button{padding:8px 9px;background:var(--raise);color:var(--ink);font-size:13px;flex:1 1 auto;}
 .seg button.sel{background:var(--accent);color:#10201b;font-weight:700;}
 .seg.diff button{flex:1 1 30%;}
+.seg.hold button{flex:1 1 20%;min-width:62px;}
 .mrow{display:flex;gap:8px;}
 .mrow .field{flex:1;}
 .btn-primary{background:var(--accent);color:#10201b;padding:11px 0;width:100%;font-weight:700;font-size:15px;}
@@ -159,146 +166,237 @@ const MUSCLES=[
  {id:"biceps",name:"Biceps"},{id:"triceps",name:"Triceps"},{id:"core",name:"Core"},
  {id:"glutes",name:"Glutes"},{id:"quads",name:"Quads"},{id:"hams",name:"Hamstrings"},
  {id:"calves",name:"Calves"},{id:"neck",name:"Neck & Upper Back"},
- {id:"hipflex",name:"Hip Flexors"},{id:"pelvic",name:"Pelvic Floor & Deep Core"}];
+ {id:"hipflex",name:"Hip Flexors"},{id:"groin",name:"Groin (Adductors)"},{id:"itband",name:"IT Band / Outer Hip"},
+ {id:"pelvic",name:"Pelvic Floor & Deep Core"},{id:"forearm",name:"Forearms & Wrists"},{id:"ankle",name:"Ankles"}];
 const EQ={none:"No equipment",loop:"Loop band",handle:"Handle band",db:"Dumbbell"};
 const BUILTIN=[
 // CHEST
+
 {id:"ch1",m:"chest",t:"ex",name:"Push-up",eq:"none",yt:"how to do a push up proper form",
  cues:["Body in one straight line, glutes tight","Hands slightly wider than shoulders","Lower chest to floor, elbows about 45 degrees from body","Drop to knees to make it easier"]},
+
 {id:"ch2",m:"chest",t:"ex",name:"Dumbbell Floor Press",eq:"db",yt:"dumbbell floor press form",
  cues:["Lie on back, knees bent","Wrists stacked over elbows","Press up over mid-chest, lower until upper arms touch floor","Do not bounce off the floor"]},
+
 {id:"ch3",m:"chest",t:"ex",name:"Band Chest Press",eq:"handle",yt:"resistance band chest press standing form",
  cues:["Anchor band behind you at chest height","Stagger stance, press handles forward","Keep shoulders down, do not shrug","Slow return - resist the band"]},
-{id:"ch4",m:"chest",t:"st",name:"Doorway Pec Stretch",eq:"none",yt:"doorway pec stretch how to",
+
+{id:"ch4",m:"chest",t:"st",bs:true,name:"Doorway Pec Stretch",eq:"none",yt:"doorway pec stretch how to",
  cues:["Forearm on door frame, elbow at 90 degrees","Step gently through the doorway","Feel it across the chest, not in the shoulder joint","Do both sides"]},
+
 {id:"ch5",m:"chest",t:"st",name:"Hands-Behind-Back Chest Opener",eq:"none",yt:"standing chest opener stretch hands clasped behind back",
  cues:["Clasp hands behind back, straighten arms","Lift hands away from body slightly","Keep chin tucked, ribs down"]},
 // BACK
+
 {id:"bk1",m:"back",t:"ex",name:"Bent-Over Dumbbell Row",eq:"db",yt:"bent over dumbbell row proper form",
  cues:["Hinge at hips, flat back, chest up","Pull elbow toward hip, squeeze shoulder blade","No torso twisting or jerking","One arm supported on chair works too"]},
+
 {id:"bk2",m:"back",t:"ex",name:"Band Seated Row",eq:"handle",yt:"seated resistance band row form",
  cues:["Sit tall, legs extended, band around feet","Pull handles to ribs, elbows close","Squeeze shoulder blades together","Do not round the lower back"]},
+
 {id:"bk3",m:"back",t:"ex",name:"Superman Hold",eq:"none",yt:"superman exercise back proper form",
  cues:["Lie face down, lift arms and legs","Squeeze glutes and upper back","Keep neck neutral - look at floor","Hold 3-5 sec per rep"]},
+
 {id:"bk4",m:"back",t:"st",name:"Child's Pose",eq:"none",yt:"childs pose stretch how to",
  cues:["Knees wide, hips back to heels","Arms long, forehead down","Breathe into the ribs and back"]},
+
 {id:"bk5",m:"back",t:"st",name:"Cat-Cow",eq:"none",yt:"cat cow stretch proper form",
  cues:["On all fours, move slowly with breath","Round the whole spine up, then arch down","Let the head follow, do not crank the neck"]},
 // SHOULDERS
+
 {id:"sh1",m:"shoulders",t:"ex",name:"Pike Push-up",eq:"none",yt:"pike push up form shoulders",
  cues:["Hips high in an upside-down V","Lower crown of head toward floor between hands","Elbows track back, not flared wide","Elevate feet to make harder"]},
+
 {id:"sh2",m:"shoulders",t:"ex",name:"Dumbbell Overhead Press",eq:"db",yt:"dumbbell overhead shoulder press standing form",
  cues:["Ribs down, glutes tight - no low-back arch","Press straight up to lockout","Lower with control to shoulder height"]},
+
 {id:"sh3",m:"shoulders",t:"ex",name:"Band Lateral Raise",eq:"handle",yt:"resistance band lateral raise form",
  cues:["Stand on band, soft elbows","Raise only to shoulder height","Lead with elbows, no shrugging"]},
-{id:"sh4",m:"shoulders",t:"st",name:"Cross-Body Shoulder Stretch",eq:"none",yt:"cross body shoulder stretch how to",
+
+{id:"sh4",m:"shoulders",t:"st",bs:true,name:"Cross-Body Shoulder Stretch",eq:"none",yt:"cross body shoulder stretch how to",
  cues:["Pull arm across chest with other hand","Keep shoulder down away from ear","Gentle pull, both sides"]},
-{id:"sh5",m:"shoulders",t:"st",name:"Thread the Needle",eq:"none",yt:"thread the needle stretch shoulder",
+
+{id:"sh5",m:"shoulders",t:"st",bs:true,name:"Thread the Needle",eq:"none",yt:"thread the needle stretch shoulder",
  cues:["From all fours, slide one arm under the other","Rest shoulder and ear on floor","Feel it behind the shoulder and upper back","Both sides"]},
 // BICEPS
+
 {id:"bi1",m:"biceps",t:"ex",name:"Dumbbell Curl",eq:"db",yt:"dumbbell bicep curl proper form",
  cues:["Elbows pinned to sides","No swinging - if you rock, go lighter","Lower all the way down slowly"]},
+
 {id:"bi2",m:"biceps",t:"ex",name:"Band Curl",eq:"handle",yt:"resistance band bicep curl form",
  cues:["Stand on band, curl handles up","Elbows stay at sides","Resist the band on the way down"]},
+
 {id:"bi3",m:"biceps",t:"ex",name:"Towel Isometric Curl",eq:"none",yt:"towel isometric bicep curl",
  cues:["Step on a towel, curl and hold against it","Pull hard for 10-20 sec at 90 degrees","Keep wrist straight, breathe"]},
-{id:"bi4",m:"biceps",t:"st",name:"Wall Biceps Stretch",eq:"none",yt:"wall bicep stretch how to",
+
+{id:"bi4",m:"biceps",t:"st",bs:true,name:"Wall Biceps Stretch",eq:"none",yt:"wall bicep stretch how to",
  cues:["Palm flat on wall behind you, fingers down or back","Slowly turn body away from arm","Mild stretch in front of arm - never force","Both sides"]},
+
 {id:"bi5",m:"biceps",t:"st",name:"Arms-Back Clasp Biceps Stretch",eq:"none",yt:"biceps stretch hands clasped behind back palms down",
  cues:["Clasp hands behind back, rotate palms down","Straighten and lift arms slightly","Stand tall, do not lean forward"]},
 // TRICEPS
+
 {id:"tr1",m:"triceps",t:"ex",name:"Chair Dip",eq:"none",yt:"chair tricep dips proper form",
  cues:["Hands on chair edge, fingers forward","Elbows point straight back","Shoulders down - stop if pinching","Bend knees more to make easier"]},
+
 {id:"tr2",m:"triceps",t:"ex",name:"Dumbbell Overhead Extension",eq:"db",yt:"dumbbell overhead tricep extension form",
  cues:["Hold one dumbbell with both hands overhead","Elbows stay by ears, do not flare","Lower behind head, press back up"]},
+
 {id:"tr3",m:"triceps",t:"ex",name:"Band Pressdown",eq:"handle",yt:"resistance band tricep pushdown form",
  cues:["Anchor band high (door anchor)","Elbows pinned to sides","Press down to full lockout, slow return"]},
-{id:"tr4",m:"triceps",t:"st",name:"Overhead Triceps Stretch",eq:"none",yt:"overhead tricep stretch how to",
+
+{id:"tr4",m:"triceps",t:"st",bs:true,name:"Overhead Triceps Stretch",eq:"none",yt:"overhead tricep stretch how to",
  cues:["Reach one hand down your back, elbow up","Gently assist with other hand","Keep ribs down, no arching","Both sides"]},
-{id:"tr5",m:"triceps",t:"st",name:"Towel Behind-Back Stretch",eq:"none",yt:"towel shoulder tricep stretch behind back",
+
+{id:"tr5",m:"triceps",t:"st",bs:true,name:"Towel Behind-Back Stretch",eq:"none",yt:"towel shoulder tricep stretch behind back",
  cues:["Hold towel behind back, one hand over shoulder, one below","Gently pull up then down","Move slowly, both arrangements"]},
 // CORE
+
 {id:"co1",m:"core",t:"ex",name:"Dead Bug",eq:"none",yt:"dead bug exercise proper form",
  cues:["Low back gently pressed into floor the whole time","Opposite arm and leg lower slowly","Exhale as you extend","Stop when back starts to arch"]},
+
 {id:"co2",m:"core",t:"ex",name:"Plank",eq:"none",yt:"plank proper form",
  cues:["Straight line ear to ankle","Glutes and quads tight","Do not let hips sag or pike","Knees down to make easier"]},
-{id:"co3",m:"core",t:"ex",name:"Band Pallof Press",eq:"handle",yt:"pallof press resistance band form",
+
+{id:"co3",m:"core",t:"ex",bs:true,name:"Band Pallof Press",eq:"handle",yt:"pallof press resistance band form",
  cues:["Anchor band at chest height, stand sideways","Press hands straight out, resist rotation","Ribs down, breathe","Both sides"]},
+
 {id:"co4",m:"core",t:"st",name:"Sphinx / Cobra",eq:"none",yt:"sphinx pose cobra stretch how to",
  cues:["Lie face down, prop on forearms (sphinx) or hands (cobra)","Keep hips on floor, glutes relaxed","Only go where back feels comfortable"]},
-{id:"co5",m:"core",t:"st",name:"Standing Side Bend",eq:"none",yt:"standing side bend stretch obliques",
+
+{id:"co5",m:"core",t:"st",bs:true,name:"Standing Side Bend",eq:"none",yt:"standing side bend stretch obliques",
  cues:["Reach one arm overhead, lean sideways","Keep hips level, do not twist","Breathe into the stretched side","Both sides"]},
 // GLUTES
+
 {id:"gl1",m:"glutes",t:"ex",name:"Glute Bridge",eq:"none",yt:"glute bridge proper form",
  cues:["Feet hip-width, heels near butt","Squeeze glutes to lift - not lower back","Ribs down at top, do not overarch","Pause 2 sec at top"]},
+
 {id:"gl2",m:"glutes",t:"ex",name:"Banded Lateral Walk",eq:"loop",yt:"banded lateral walk glutes form",
  cues:["Band above knees or ankles","Quarter squat, stay low the whole time","Small controlled steps, knees pushed out"]},
+
 {id:"gl3",m:"glutes",t:"ex",name:"Single-Leg Glute Bridge",eq:"none",yt:"single leg glute bridge form",
  cues:["One foot down, other leg extended","Keep hips level - do not let one side drop","Push through the heel"]},
-{id:"gl4",m:"glutes",t:"st",name:"Figure-4 Stretch",eq:"none",yt:"figure 4 glute stretch lying",
+
+{id:"gl4",m:"glutes",t:"st",bs:true,name:"Figure-4 Stretch",eq:"none",yt:"figure 4 glute stretch lying",
  cues:["On back, ankle over opposite knee","Pull the bottom thigh toward chest","Keep head and shoulders down","Both sides"]},
-{id:"gl5",m:"glutes",t:"st",name:"Pigeon Stretch",eq:"none",yt:"pigeon pose stretch how to",
+
+{id:"gl5",m:"glutes",t:"st",bs:true,name:"Pigeon Stretch",eq:"none",yt:"pigeon pose stretch how to",
  cues:["Front shin angled, back leg long","Square hips forward","Fold forward only as far as comfortable","Both sides"]},
 // QUADS
+
 {id:"qu1",m:"quads",t:"ex",name:"Bodyweight Squat",eq:"none",yt:"bodyweight squat proper form",
  cues:["Feet shoulder-width, toes slightly out","Knees track over toes","Chest tall, weight in whole foot","Depth: comfortable and pain-free"]},
+
 {id:"qu2",m:"quads",t:"ex",name:"Goblet Squat",eq:"db",yt:"goblet squat dumbbell form",
  cues:["Hold dumbbell at chest, elbows down","Elbows track inside knees at bottom","Heels stay down, chest up"]},
+
 {id:"qu3",m:"quads",t:"ex",name:"Split Squat",eq:"none",yt:"split squat proper form",
  cues:["Long stance, front heel planted","Drop back knee straight down","Front knee tracks over toes","Hold dumbbells to progress"]},
-{id:"qu4",m:"quads",t:"st",name:"Standing Quad Stretch",eq:"none",yt:"standing quad stretch how to",
+
+{id:"qu4",m:"quads",t:"st",bs:true,name:"Standing Quad Stretch",eq:"none",yt:"standing quad stretch how to",
  cues:["Pull heel to butt, knees together","Tuck pelvis under - do not arch back","Hold wall for balance","Both sides"]},
-{id:"qu5",m:"quads",t:"st",name:"Kneeling Quad / Couch Stretch",eq:"none",yt:"couch stretch quad hip flexor how to",
+
+{id:"qu5",m:"quads",t:"st",bs:true,name:"Kneeling Quad / Couch Stretch",eq:"none",yt:"couch stretch quad hip flexor how to",
  cues:["Back foot elevated on couch or wall, knee on pad","Squeeze glute of back leg, pelvis tucked","Upright torso increases stretch","Both sides"]},
 // HAMSTRINGS
+
 {id:"ha1",m:"hams",t:"ex",name:"Dumbbell Romanian Deadlift",eq:"db",yt:"dumbbell romanian deadlift proper form",
  cues:["Soft knees, push hips straight back","Flat back the entire time","Lower until hamstrings pull, stand by squeezing glutes","Dumbbells stay close to legs"]},
+
 {id:"ha2",m:"hams",t:"ex",name:"Sliding Hamstring Curl",eq:"none",yt:"sliding hamstring curl towel form",
  cues:["On back, heels on towel on smooth floor","Bridge hips up, slide heels out and in","Keep hips up the whole time","Bend knees less to make harder"]},
+
 {id:"ha3",m:"hams",t:"ex",name:"Band Good Morning",eq:"loop",yt:"banded good morning exercise form",
  cues:["Band under feet and around back of neck or shoulders","Hinge at hips, flat back","Stand up by squeezing glutes"]},
-{id:"ha4",m:"hams",t:"st",name:"Standing Hamstring Stretch",eq:"none",yt:"standing hamstring stretch proper form",
+
+{id:"ha4",m:"hams",t:"st",bs:true,name:"Standing Hamstring Stretch",eq:"none",yt:"standing hamstring stretch proper form",
  cues:["Heel on low step, leg straight","Hinge from hips with flat back","Do not round the spine to reach further","Both sides"]},
-{id:"ha5",m:"hams",t:"st",name:"Lying Band Hamstring Stretch",eq:"loop",yt:"lying hamstring stretch with strap how to",
+
+{id:"ha5",m:"hams",t:"st",bs:true,name:"Lying Band Hamstring Stretch",eq:"loop",yt:"lying hamstring stretch with strap how to",
  cues:["On back, band or towel around foot","Keep leg straight, pull gently toward you","Other leg stays down on floor","Both sides"]},
 // CALVES
+
 {id:"ca1",m:"calves",t:"ex",name:"Standing Calf Raise",eq:"none",yt:"standing calf raise proper form",
  cues:["Full range: high on toes, pause at top","Lower slowly for a stretch at bottom","Single-leg to progress","Use wall for balance"]},
+
 {id:"ca2",m:"calves",t:"ex",name:"Dumbbell Calf Raise",eq:"db",yt:"dumbbell calf raise form",
  cues:["Hold dumbbells at sides","Slow 2-second lowering","Stand on a step for bigger range"]},
-{id:"ca3",m:"calves",t:"st",name:"Wall Calf Stretch",eq:"none",yt:"wall calf stretch how to",
+
+{id:"ca3",m:"calves",t:"st",bs:true,name:"Wall Calf Stretch",eq:"none",yt:"wall calf stretch how to",
  cues:["Back leg straight, heel down = upper calf","Bend the back knee slightly = lower calf/soleus","Hips square to wall","Both sides"]},
-{id:"ca4",m:"calves",t:"st",name:"Stair Heel Drop",eq:"none",yt:"calf stretch on stairs heel drop",
+
+{id:"ca4",m:"calves",t:"st",bs:true,name:"Stair Heel Drop",eq:"none",yt:"calf stretch on stairs heel drop",
  cues:["Ball of foot on step edge","Let heel sink slowly below step","Hold rail for balance","Both sides"]},
 // NECK & UPPER BACK
+
 {id:"ne1",m:"neck",t:"ex",name:"Chin Tucks",eq:"none",yt:"chin tuck exercise proper form",
  cues:["Glide head straight back - make a double chin","Do not tilt up or down","Hold 3-5 sec each rep","Great against a wall"]},
+
 {id:"ne2",m:"neck",t:"ex",name:"Wall Angels",eq:"none",yt:"wall angels exercise proper form",
  cues:["Back and head against wall, ribs down","Arms slide up and down keeping wall contact","Move only in the range you can keep contact","Slow and controlled"]},
+
 {id:"ne3",m:"neck",t:"ex",name:"Band Pull-Apart",eq:"handle",yt:"band pull apart proper form",
  cues:["Arms straight at shoulder height","Pull band apart, squeeze shoulder blades","No shrugging, ribs down","Control the return"]},
-{id:"ne4",m:"neck",t:"st",name:"Upper Trap Stretch",eq:"none",yt:"upper trapezius stretch how to",
+
+{id:"ne4",m:"neck",t:"st",bs:true,name:"Upper Trap Stretch",eq:"none",yt:"upper trapezius stretch how to",
  cues:["Ear toward shoulder, opposite arm relaxed down","Gentle hand assist only - no pulling hard","Keep both shoulders down","Both sides"]},
-{id:"ne5",m:"neck",t:"st",name:"Levator Scap Stretch",eq:"none",yt:"levator scapulae stretch how to",
+
+{id:"ne5",m:"neck",t:"st",bs:true,name:"Levator Scap Stretch",eq:"none",yt:"levator scapulae stretch how to",
  cues:["Turn head 45 degrees, look toward armpit","Gently guide head down with hand","Keep other shoulder down","Both sides"]},
 // HIP FLEXORS
+
 {id:"hf1",m:"hipflex",t:"ex",name:"Banded Psoas March",eq:"loop",yt:"banded psoas march exercise form",
  cues:["On back, band around feet","Pull one knee in while resisting with the other leg","Low back stays pressed down","Slow alternating reps"]},
-{id:"hf2",m:"hipflex",t:"ex",name:"Seated Knee Lift",eq:"none",yt:"seated knee lift hip flexor raise exercise",
+
+{id:"hf2",m:"hipflex",t:"ex",bs:true,name:"Seated Knee Lift",eq:"none",yt:"seated knee lift hip flexor raise exercise",
  cues:["Sit tall on a chair edge","Lift one knee as high as possible without leaning back","Hold 3-5 sec at top","Both sides"]},
-{id:"hf3",m:"hipflex",t:"st",name:"Half-Kneeling Hip Flexor Stretch",eq:"none",yt:"half kneeling hip flexor stretch proper form",
+
+{id:"hf3",m:"hipflex",t:"st",bs:true,name:"Half-Kneeling Hip Flexor Stretch",eq:"none",yt:"half kneeling hip flexor stretch proper form",
  cues:["Tall kneel, one foot forward","Tuck pelvis and squeeze back glute FIRST","Then shift forward slightly - stretch should be in front of hip","Do not arch the low back","Both sides"]},
-{id:"hf4",m:"hipflex",t:"st",name:"Low Lunge",eq:"none",yt:"low lunge stretch how to",
+
+{id:"hf4",m:"hipflex",t:"st",bs:true,name:"Low Lunge",eq:"none",yt:"low lunge stretch how to",
  cues:["Back knee down, hands on front thigh or floor","Sink hips forward and down gently","Keep front knee over ankle","Both sides"]},
+// GROIN (ADDUCTORS)
+
+{id:"gr1",m:"groin",t:"st",name:"Seated Butterfly Stretch",eq:"none",yt:"butterfly stretch groin adductor how to",
+ cues:["Sit tall, soles of feet together, knees fall open","Hold ankles or feet, sit up straight","Gently press knees down with elbows - never force","Hinge forward from hips only as far as comfortable"]},
+
+{id:"gr2",m:"groin",t:"st",bs:true,name:"Standing Side Lunge (Adductor Stretch)",eq:"none",yt:"standing side lunge groin adductor stretch how to",
+ cues:["Wide stance, toes pointed forward","Shift weight into one bent knee, keep other leg straight","Both feet stay flat on floor, chest up","Feel it on the inner thigh of the straight leg - both sides"]},
+// IT BAND / OUTER HIP
+
+{id:"it1",m:"itband",t:"st",bs:true,name:"Standing IT Band Stretch",eq:"none",yt:"standing IT band stretch outer hip how to",
+ cues:["Cross one leg behind the other, feet together","Lean torso away from the back leg, reach arm overhead","Keep hips square - do not twist","Feel it along outer hip/thigh - both sides"]},
+
+{id:"it2",m:"itband",t:"st",bs:true,name:"Seated Spinal Twist (Outer Hip)",eq:"none",yt:"seated spinal twist outer hip IT band stretch",
+ cues:["Sit with one leg straight, cross other foot over it","Twist toward the bent knee, hand behind you for support","Use opposite elbow to gently deepen the twist","Feel it in outer hip and glute - both sides"]},
 // PELVIC FLOOR & DEEP CORE
+
 {id:"pf1",m:"pelvic",t:"ex",name:"Kegels (Pelvic Floor Lifts)",eq:"none",yt:"how to do kegels correctly women",
  cues:["Lift and squeeze like stopping urine flow, then FULLY relax","Full relax is as important as the squeeze","Do not hold breath, clench glutes, or squeeze thighs","Mix quick pulses and 5-10 sec holds"]},
+
 {id:"pf2",m:"pelvic",t:"ex",name:"Diaphragmatic Breathing + Heel Slides",eq:"none",yt:"diaphragmatic breathing heel slides core exercise postpartum",
  cues:["Inhale into ribs and belly, pelvic floor relaxes","Exhale, gently draw lower belly in, then slide heel out","Low back stays neutral","Slow - the exhale drives the movement"]},
+
 {id:"pf3",m:"pelvic",t:"st",name:"Deep Squat Hold",eq:"none",yt:"deep squat hold pelvic floor relaxation",
  cues:["Sink into a full deep squat, heels down if possible","Hold onto a doorway or counter for support","Breathe low and slow - let the pelvic floor relax"]},
+
 {id:"pf4",m:"pelvic",t:"st",name:"Happy Baby",eq:"none",yt:"happy baby pose how to",
- cues:["On back, grab feet or shins, knees wide toward armpits","Low back stays on the floor","Slow deep breaths, relax the pelvic floor"]}
+ cues:["On back, grab feet or shins, knees wide toward armpits","Low back stays on the floor","Slow deep breaths, relax the pelvic floor"]},
+// FOREARMS & WRISTS
+
+{id:"fa1",m:"forearm",t:"st",bs:true,name:"Wrist Flexor Stretch",eq:"none",yt:"wrist flexor stretch forearm how to",
+ cues:["Extend arm forward, palm up","Gently pull fingers back and down with other hand","Keep elbow straight, shoulder relaxed","Both sides"]},
+
+{id:"fa2",m:"forearm",t:"st",bs:true,name:"Wrist Extensor Stretch",eq:"none",yt:"wrist extensor stretch forearm how to",
+ cues:["Extend arm forward, palm down","Gently pull hand down and toward body with other hand","Keep elbow straight","Both sides"]},
+// ANKLES
+
+{id:"an1",m:"ankle",t:"st",bs:true,name:"Kneeling Ankle Dorsiflexion Stretch",eq:"none",yt:"kneeling ankle dorsiflexion stretch knee to wall",
+ cues:["Kneel with one foot flat in front, knee over ankle","Keep heel down, drive knee forward over toes","Stop when heel wants to lift","Both sides"]},
+
+{id:"an2",m:"ankle",t:"st",name:"Top-of-Foot Stretch (Kneeling)",eq:"none",yt:"top of foot ankle stretch kneeling",
+ cues:["Kneel and sit back onto heels, tops of feet flat on floor","Ease weight back gently, use hands for support if needed","Stop at a mild stretch across top of foot/ankle","Come up slowly"]}
 ];
 /* ===== Utils ===== */
 const $=s=>document.querySelector(s);
@@ -354,20 +452,38 @@ function ensureDay(date){
  if(S.days[date]&&S.days[date].items&&S.days[date].items.length)return S.days[date];
  const rng=mulberry32(hashStr(date+"|momstrong"));
  const lib=getLib(false);
- const picks=[];
+ const picks=[],meta=[];
  for(const mu of MUSCLES){
   const exs=lib.filter(x=>x.m===mu.id&&x.t==="ex");
   const sts=lib.filter(x=>x.m===mu.id&&x.t==="st");
   if(!exs.length&&!sts.length)continue;
-  let type;
+  let type,stStale=false;
   if(!exs.length)type="st";else if(!sts.length)type="ex";
   else{
-   const stStale=daysSince(lastDate(l=>l.m===mu.id&&l.t==="st"),date)>=5;
+   stStale=daysSince(lastDate(l=>l.m===mu.id&&l.t==="st"),date)>=5;
    type=rng()<(stStale?0.75:0.5)?"st":"ex";
   }
   const pool=type==="st"?sts:exs;
   const mod=pool[Math.floor(rng()*pool.length)];
   picks.push({mod:mod.id,m:mu.id,t:type,done:false,logId:null});
+  meta.push({exs:exs,stale:stStale});
+ }
+ /* strengthening floor: at least a quarter of the day's items must be exercises.
+    Convert stretch picks to exercises, muscles with a fresh stretch first so the
+    5-day stretch-staleness rule is the last thing given up. */
+ const quota=Math.ceil(picks.length/4);
+ let exCount=picks.filter(p=>p.t==="ex").length;
+ if(exCount<quota){
+  const swappable=picks.map((p,i)=>i).filter(i=>picks[i].t==="st"&&meta[i].exs.length);
+  const order=shuffle(swappable.filter(i=>!meta[i].stale),rng)
+        .concat(shuffle(swappable.filter(i=>meta[i].stale),rng));
+  for(const i of order){
+   if(exCount>=quota)break;
+   const pool=meta[i].exs;
+   picks[i].mod=pool[Math.floor(rng()*pool.length)].id;
+   picks[i].t="ex";
+   exCount++;
+  }
  }
  const overdue=[],recent=[];
  for(const p of picks){
@@ -385,33 +501,57 @@ function rerollToday(){const d=todayStr();delete S.days[d];save();ensureDay(d);r
    stretch  diff: mild, strong, pain */
 const EXDIFF=[["wte","Way too easy"],["se","Somewhat easy"],["jr","Just right"],["sh","Somewhat hard"],["wth","Way too hard"]];
 const STDIFF=[["mild","Mild stretch"],["strong","Strong but comfortable"],["pain","Painful"]];
-const HOLDS=[30,60,90,120];
+const HOLDS=[15,30,45,60,75,90,105,120];
 function diffLabel(code){const all=EXDIFF.concat(STDIFF);const f=all.find(x=>x[0]===code);return f?f[1]:"";}
+/* unilateral modules: numbers logged are per side */
+const PERSIDE=" / side";
+function sideSuffix(x){return(x&&x.bs)?PERSIDE:"";}
 function nextBand(color,dir){
  const ord=S.settings.bandOrder;const i=ord.indexOf(color);
  if(!S.settings.bandOrderSet||i<0)return null;
  const j=i+dir;return(j>=0&&j<ord.length)?ord[j]:null;}
-function stepHold(sec,dir){
- let i=HOLDS.indexOf(sec);if(i<0){i=HOLDS.findIndex(h=>h>=sec);if(i<0)i=HOLDS.length-1;}
- const j=Math.min(Math.max(i+dir,0),HOLDS.length-1);return HOLDS[j];}
+/* hold choices for a module = the standard ladder plus its own default */
+function holdList(mod){
+ const L=HOLDS.slice();
+ if(mod&&mod.hold&&L.indexOf(mod.hold)<0)L.push(mod.hold);
+ return L.sort((a,b)=>a-b);}
+function stepHold(sec,dir,list){
+ const L=(list&&list.length)?list:HOLDS;
+ let i=L.indexOf(sec);if(i<0){i=L.findIndex(h=>h>=sec);if(i<0)i=L.length-1;}
+ const j=Math.min(Math.max(i+dir,0),L.length-1);return L[j];}
 
 function suggest(mod){
  const last=lastLogFor(mod.id);
  const sug={weight:null,reps:null,sets:null,band:null,hold:null,note:"",dir:0,last:last};
+ const HL=holdList(mod);
  if(mod.t==="st"){
-  sug.hold=last&&last.hold?last.hold:30;
+  sug.hold=last&&last.hold?last.hold:(mod.hold||30);
+  if(mod.reps)sug.reps=last&&last.reps?last.reps:mod.reps;
+  if(mod.sets)sug.sets=last&&last.sets?last.sets:mod.sets;
   if(last){
-   if(last.diff==="mild"){const h=stepHold(sug.hold,1);if(h>sug.hold){sug.hold=h;sug.note="was mild last time - longer hold";sug.dir=1;}else{sug.note="was mild - deepen the stretch";sug.dir=1;}}
-   else if(last.diff==="pain"){const h=stepHold(sug.hold,-1);sug.hold=h;sug.note="was painful last time - ease off";sug.dir=-1;}
+   if(last.diff==="mild"){const h=stepHold(sug.hold,1,HL);if(h>sug.hold){sug.hold=h;sug.note="was mild last time - longer hold";sug.dir=1;}else{sug.note="was mild - deepen the stretch";sug.dir=1;}}
+   else if(last.diff==="pain"){const h=stepHold(sug.hold,-1,HL);sug.hold=h;sug.note="was painful last time - ease off";sug.dir=-1;}
   }
   return sug;
  }
  // exercise
- sug.reps=last&&last.reps?last.reps:10;
- sug.sets=last&&last.sets?last.sets:2;
+ const holdOnly=!!(mod.hold&&!mod.reps);
+ sug.reps=holdOnly?null:(last&&last.reps?last.reps:(mod.reps||10));
+ sug.sets=last&&last.sets?last.sets:(mod.sets||2);
+ if(mod.hold)sug.hold=last&&last.hold?last.hold:mod.hold;
  if(mod.eq==="db")sug.weight=last&&last.weight?last.weight:null;
  if(mod.eq==="loop"||mod.eq==="handle")sug.band=last&&last.band?last.band:null;
  if(!last)return sug;
+ if(holdOnly){ // timed exercise (plank, superman): progress the hold, not reps
+  if(last.diff==="wte"||last.diff==="se"){
+   const h=stepHold(sug.hold,1,HL);
+   if(h>sug.hold){sug.hold=h;sug.note="was easy - longer hold";}else{sug.note="was easy - add a set";sug.sets=(sug.sets||2)+1;}
+   sug.dir=1;
+  }else if(last.diff==="wth"){
+   sug.hold=stepHold(sug.hold,-1,HL);sug.note="was way too hard - shorter hold";sug.dir=-1;
+  }
+  return sug;
+ }
  if(last.diff==="wte"){
   sug.dir=1;
   if(mod.eq==="db"&&last.weight){sug.weight=last.weight+2.5;sug.note="was way too easy - weight up";}
@@ -442,7 +582,7 @@ function lastLine(mod){
  if(l.band)bits.push(l.band+" band");
  if(l.reps)bits.push(l.reps+" reps"+(l.sets?" x "+l.sets:""));
  if(l.hold)bits.push(fmtHold(l.hold)+" hold");
- let s="Last ("+shortDate(l.date)+"): "+(bits.length?bits.join(", "):"done");
+ let s="Last ("+shortDate(l.date)+"): "+(bits.length?bits.join(", ")+sideSuffix(l.bs?l:mod):"done");
  if(l.diff)s+=" - "+diffLabel(l.diff).toLowerCase();
  return s;}
 function tryLine(mod,sug){
@@ -450,9 +590,9 @@ function tryLine(mod,sug){
  if(sug.weight)bits.push(sug.weight+" lb");
  if(sug.band)bits.push(sug.band+" band");
  if(sug.reps)bits.push(sug.reps+" reps x "+(sug.sets||2));
- if(mod.t==="st"&&sug.hold)bits.push(fmtHold(sug.hold)+" hold");
+ if(sug.hold)bits.push(fmtHold(sug.hold)+" hold"+(!sug.reps&&sug.sets&&mod.t==="ex"?" x "+sug.sets:""));
  if(!bits.length)return null;
- return "Try: "+bits.join(", ")+(sug.note?" ("+sug.note+")":"");}
+ return "Try: "+bits.join(", ")+sideSuffix(mod)+(sug.note?" ("+sug.note+")":"");}
 /* ===== Today view ===== */
 let TAB="today";
 function muscleName(id){const m=MUSCLES.find(x=>x.id===id);return m?m.name:id;}
@@ -503,7 +643,9 @@ function cardHtml(it,date,done){
  h+='<input type="checkbox" class="chk" data-chk="'+esc(mod.id)+'"'+(done?" checked":"")+'>';
  h+='<div class="chips"><span class="chip'+(mod.t==="st"?" st":"")+'">'+(mod.t==="st"?"Stretch":"Exercise")+'</span>';
  h+='<span class="chip'+(mod.t==="st"?" st":"")+'">'+esc(muscleName(mod.m))+'</span>';
- h+='<span class="chip eq">'+esc(EQ[mod.eq]||mod.eq)+'</span></div>';
+ h+='<span class="chip eq">'+esc(EQ[mod.eq]||mod.eq)+'</span>';
+ if(mod.bs)h+='<span class="chip bs">Both sides</span>';
+ h+='</div>';
  h+='<div class="name">'+esc(mod.name)+'</div>';
  if(!done){
   h+='<div class="lastline">'+esc(lastLine(mod))+'</div>';
@@ -517,9 +659,9 @@ function cardHtml(it,date,done){
   const nt=S.notes[mod.id]||"";
   h+='<details class="cues notesd"'+(nt?" open":"")+'><summary>Notes'+(nt?" &#9998;":"")+'</summary>';
   h+='<textarea class="notesbox" data-note="'+esc(mod.id)+'" placeholder="e.g. use kitchen counter, right side tighter">'+esc(nt)+'</textarea></details>';
-  if(mod.t==="st"){
+  if(mod.t==="st"||mod.hold){
    h+='<div class="timer" data-timer="'+esc(mod.id)+'"><select data-tsel>';
-   for(const s of HOLDS)h+='<option value="'+s+'"'+(sug.hold===s?" selected":"")+'>'+fmtHold(s)+'</option>';
+   for(const s of holdList(mod))h+='<option value="'+s+'"'+(sug.hold===s?" selected":"")+'>'+fmtHold(s)+'</option>';
    h+='</select><span class="tdisp">'+fmtHold(sug.hold||30)+'</span>';
    h+='<button data-tstart>Start</button><button data-treset>&#8634;</button></div>';
   }
@@ -589,7 +731,9 @@ function openLog(date,modId){
  const sug=suggest(mod);
  modalState={date:date,mod:mod,diff:null};
  let h='<h2>'+esc(mod.name)+'</h2>';
+ if(mod.bs)h+='<div class="note">Both sides - the numbers below are per side.</div>';
  if(sug.note)h+='<div class="note">'+esc(sug.note)+'</div>';
+ const HL=holdList(mod),SS=mod.bs?" / side":"";
  if(mod.t==="ex"){
   h+='<div class="mrow">';
   if(mod.eq==="db")h+='<div class="field"><label>Weight (lb)</label><input type="number" inputmode="decimal" step="0.5" id="f_weight" value="'+(sug.weight!=null?sug.weight:"")+'"></div>';
@@ -598,16 +742,27 @@ function openLog(date,modId){
    for(const c of S.settings.bandOrder)h+='<option'+(sug.band===c?" selected":"")+'>'+esc(c)+'</option>';
    h+='</select></div>';
   }
-  h+='<div class="field"><label>Reps</label><input type="number" inputmode="numeric" id="f_reps" value="'+(sug.reps!=null?sug.reps:"")+'"></div>';
+  h+='<div class="field"><label>Reps'+SS+'</label><input type="number" inputmode="numeric" id="f_reps" value="'+(sug.reps!=null?sug.reps:"")+'"></div>';
   h+='<div class="field"><label>Sets</label><input type="number" inputmode="numeric" id="f_sets" value="'+(sug.sets!=null?sug.sets:"")+'"></div>';
   h+='</div>';
+  if(mod.hold){
+   h+='<div class="field"><label>Hold time'+SS+'</label><div class="seg hold" id="f_hold">';
+   for(const s of HL)h+='<button data-hold="'+s+'"'+(sug.hold===s?' class="sel"':'')+'>'+fmtHold(s)+'</button>';
+   h+='</div></div>';
+  }
   h+='<div class="field"><label>How did it feel?</label><div class="seg diff" id="f_diff">';
   for(const[c,l]of EXDIFF)h+='<button data-diff="'+c+'">'+l+'</button>';
   h+='</div></div>';
  }else{
-  h+='<div class="field"><label>Hold time</label><div class="seg" id="f_hold">';
-  for(const s of HOLDS)h+='<button data-hold="'+s+'"'+(sug.hold===s?' class="sel"':'')+'>'+fmtHold(s)+'</button>';
+  h+='<div class="field"><label>Hold time'+SS+'</label><div class="seg hold" id="f_hold">';
+  for(const s of HL)h+='<button data-hold="'+s+'"'+(sug.hold===s?' class="sel"':'')+'>'+fmtHold(s)+'</button>';
   h+='</div></div>';
+  if(mod.reps||mod.sets){
+   h+='<div class="mrow">';
+   h+='<div class="field"><label>Reps'+SS+'</label><input type="number" inputmode="numeric" id="f_reps" value="'+(sug.reps!=null?sug.reps:"")+'"></div>';
+   h+='<div class="field"><label>Sets</label><input type="number" inputmode="numeric" id="f_sets" value="'+(sug.sets!=null?sug.sets:"")+'"></div>';
+   h+='</div>';
+  }
   h+='<div class="field"><label>How did it feel?</label><div class="seg diff" id="f_diff">';
   for(const[c,l]of STDIFF)h+='<button data-diff="'+c+'">'+l+'</button>';
   h+='</div></div>';
@@ -628,7 +783,7 @@ function openLog(date,modId){
 function saveLog(skip){
  const{date,mod,diff}=modalState;
  const entry={id:uid(),mod:mod.id,m:mod.m,t:mod.t,date:date,ts:Date.now(),
-  weight:null,band:null,reps:null,sets:null,hold:null,diff:null};
+  weight:null,band:null,reps:null,sets:null,hold:null,diff:null,bs:!!mod.bs};
  if(!skip){
   const w=$("#f_weight"),b=$("#f_band"),r=$("#f_reps"),s=$("#f_sets"),hv=$("#f_hold");
   if(w&&w.value)entry.weight=parseFloat(w.value);
@@ -659,8 +814,9 @@ function logBits(l){
  if(l.band)bits.push(l.band+" band");
  if(l.reps)bits.push(l.reps+" reps"+(l.sets?" x "+l.sets:""));
  if(l.hold)bits.push(fmtHold(l.hold)+" hold");
- if(l.diff)bits.push(diffLabel(l.diff).toLowerCase());
- return bits.join(", ");}
+ let s=bits.join(", ")+(bits.length?sideSuffix(l):"");
+ if(l.diff)s+=(s?", ":"")+diffLabel(l.diff).toLowerCase();
+ return s;}
 function renderCal(){
  const now=new Date();
  if(CAL_Y===null){CAL_Y=now.getFullYear();CAL_M=now.getMonth();}
@@ -827,8 +983,15 @@ function renderStats(){
 }
 
 /* ===== Library ===== */
+/* "3 x 10 reps, 0:30 hold" from a module's saved targets; "" if none set */
+function targetLabel(mod){
+ const b=[];
+ if(mod.reps)b.push((mod.sets?mod.sets+" x ":"")+mod.reps+" reps");
+ else if(mod.sets)b.push(mod.sets+" sets");
+ if(mod.hold)b.push(fmtHold(mod.hold)+" hold");
+ return b.join(", ")+(b.length?sideSuffix(mod):"");}
 function renderLibrary(){
- let h='<div class="note">Tap a module to edit it. Hidden modules are never picked for the daily list.</div>';
+ let h='<div class="note">Tap a module to edit it - set its default sets, reps and hold time there. Hidden modules are never picked for the daily list.</div>';
  for(const mu of MUSCLES){
   h+='<h3 class="sec">'+esc(mu.name)+'</h3>';
   const mods=getLib(true).filter(x=>x.m===mu.id);
@@ -836,7 +999,10 @@ function renderLibrary(){
    const hid=S.lib.hidden.includes(mod.id);
    h+='<div class="librow'+(hid?" hidden-mod":"")+'">';
    h+='<div class="info" data-edit="'+esc(mod.id)+'"><div class="n">'+esc(mod.name)+'</div>';
-   h+='<div class="d">'+(mod.t==="st"?"Stretch":"Exercise")+' &middot; '+esc(EQ[mod.eq]||mod.eq)+'</div></div>';
+   let dbits=[(mod.t==="st"?"Stretch":"Exercise"),esc(EQ[mod.eq]||mod.eq)];
+   if(mod.bs)dbits.push("Both sides");
+   const tgt=targetLabel(mod);if(tgt)dbits.push(tgt);
+   h+='<div class="d">'+dbits.join(" &middot; ")+'</div></div>';
    h+='<button class="btn-sm" data-hide="'+esc(mod.id)+'">'+(hid?"Unhide":"Hide")+'</button></div>';
   }
   h+='<button class="btn-sm" style="margin-top:6px" data-add="'+mu.id+'">+ Add to '+esc(mu.name)+'</button>';
@@ -861,15 +1027,25 @@ function openModEditor(id,muscle){
  h+='<div class="field"><label>Muscle</label><select id="e_m">';
  for(const mu of MUSCLES)h+='<option value="'+mu.id+'"'+(mod.m===mu.id?" selected":"")+'>'+esc(mu.name)+'</option>';
  h+='</select></div>';
+ h+='<div class="mrow">';
+ h+='<div class="field"><label>Sets</label><input type="number" inputmode="numeric" min="1" id="e_sets" placeholder="&ndash;" value="'+(mod.sets!=null&&mod.sets!==""?mod.sets:"")+'"></div>';
+ h+='<div class="field"><label>Reps</label><input type="number" inputmode="numeric" min="1" id="e_reps" placeholder="&ndash;" value="'+(mod.reps!=null&&mod.reps!==""?mod.reps:"")+'"></div>';
+ h+='<div class="field"><label>Hold (sec)</label><input type="number" inputmode="numeric" min="1" id="e_hold" placeholder="&ndash;" value="'+(mod.hold!=null&&mod.hold!==""?mod.hold:"")+'"></div>';
+ h+='</div><div class="note">Leave blank for none. These prefill the quick-log and the hold timer; past logs still override them.</div>';
+ h+='<label class="checkline"><input type="checkbox" id="e_bs"'+(mod.bs?" checked":"")+'><b>Both sides</b><span>do it left and right; sets, reps and hold are per side</span></label>';
  h+='<div class="field"><label>Form cues (one per line)</label><textarea id="e_cues" rows="3">'+esc((mod.cues||[]).join("\n"))+'</textarea></div>';
  h+='<div class="field"><label>YouTube search phrase</label><input type="text" id="e_yt" value="'+esc(mod.yt||"")+'"></div>';
  h+='<button class="btn-primary" id="e_save">Save</button>';
  if(id&&S.lib.custom.some(c=>c.id===id))h+='<button class="btn-ghost btn-danger" style="color:#fff" id="e_del">Delete custom module</button>';
  showModal(h);
+ const posInt=sel=>{const el=$(sel);if(!el)return null;const v=(el.value||"").trim();if(!v)return null;
+  const n=parseInt(v,10);return(isNaN(n)||n<1)?null:n;};
  $("#e_save").onclick=()=>{
   const data={name:$("#e_name").value.trim()||"Unnamed",t:$("#e_type").value,eq:$("#e_eq").value,
    m:$("#e_m").value,cues:$("#e_cues").value.split("\n").map(x=>x.trim()).filter(Boolean),
-   yt:$("#e_yt").value.trim()};
+   yt:$("#e_yt").value.trim(),
+   sets:posInt("#e_sets"),reps:posInt("#e_reps"),hold:posInt("#e_hold"),
+   bs:!!($("#e_bs")&&$("#e_bs").checked)};
   if(!id){data.id="cu_"+uid();S.lib.custom.push(data);}
   else{
    const ci=S.lib.custom.findIndex(c=>c.id===id);
