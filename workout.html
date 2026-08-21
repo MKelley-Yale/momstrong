@@ -147,6 +147,8 @@ svg.chart{width:100%;height:auto;display:block;}
 .librow .info .n{font-size:14.5px;font-weight:600;}
 .librow .info .d{font-size:12px;color:var(--sub);}
 .librow.hidden-mod .info{opacity:.4;}
+.librow.region{cursor:pointer;}
+.librow.region:active{background:var(--raise);}
 .bandrow{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--card);
   border:1px solid var(--line);border-radius:10px;margin-bottom:6px;}
 .bandrow .bn{flex:1;font-size:15px;}
@@ -524,9 +526,12 @@ function daysSince(dateStr,ref){return dateStr==null?Infinity:daysBetween(dateSt
 
 /* ===== Daily selection =====
    - 1 item per muscle: exercise or stretch
-   - stretch-favored (75/25) if that muscle's last completed stretch is 5+ days ago (or never)
+   - weighted toward whichever (stretch or exercise) that muscle has gone longer
+     without, using days-since-last-done as the weight (capped so "never done"
+     doesn't dominate outright) - not a hard 50/50 or threshold-triggered split
    - muscles not checked off (any item) in 3+ days float to the top tier
    - deterministic per date, frozen once generated */
+const STALE_CAP_DAYS=21;
 function ensureDay(date){
  if(S.days[date]&&S.days[date].items&&S.days[date].items.length)return S.days[date];
  const rng=mulberry32(hashStr(date+"|momstrong"));
@@ -539,8 +544,11 @@ function ensureDay(date){
   let type,stStale=false;
   if(!exs.length)type="st";else if(!sts.length)type="ex";
   else{
-   stStale=daysSince(lastDate(l=>l.m===mu.id&&l.t==="st"),date)>=5;
-   type=rng()<(stStale?0.75:0.5)?"st":"ex";
+   const dSt=Math.min(daysSince(lastDate(l=>l.m===mu.id&&l.t==="st"),date),STALE_CAP_DAYS);
+   const dEx=Math.min(daysSince(lastDate(l=>l.m===mu.id&&l.t==="ex"),date),STALE_CAP_DAYS);
+   stStale=dSt>=5;
+   const wSt=dSt+1,wEx=dEx+1;
+   type=rng()<(wSt/(wSt+wEx))?"st":"ex";
   }
   const pool=type==="st"?sts:exs;
   const mod=pool[Math.floor(rng()*pool.length)];
@@ -581,6 +589,12 @@ function rerollToday(){const d=todayStr();delete S.days[d];save();ensureDay(d);r
 const EXDIFF=[["wte","Way too easy"],["se","Somewhat easy"],["jr","Just right"],["sh","Somewhat hard"],["wth","Way too hard"]];
 const STDIFF=[["mild","Mild stretch"],["strong","Strong but comfortable"],["pain","Painful"]];
 const HOLDS=[15,30,45,60,75,90,105,120];
+/* double progression: a module's saved reps count is the BOTTOM of its working
+   range; REP_RANGE_SPAN above that is the top. Climb reps within the range on
+   easy sessions; only once the top is reached does weight/band/sets move, and
+   reps reset to the bottom - so load only ever increases once it's earned. */
+const REP_RANGE_SPAN=5;
+const MAX_SETS=5;
 function diffLabel(code){const all=EXDIFF.concat(STDIFF);const f=all.find(x=>x[0]===code);return f?f[1]:"";}
 /* unilateral modules: numbers logged are per side */
 const PERSIDE=" / side";
@@ -601,13 +615,19 @@ function stepHold(sec,dir,list){
 
 /* Which of hold / reps / sets this module tracks. A field is "on" when it has a
    saved value; a module with nothing saved falls back to the old defaults so
-   pre-existing custom modules keep working. */
+   pre-existing custom modules keep working. Sets is a standard item for every
+   exercise - always on, not user-toggleable; hold time and reps stay optional. */
 const FIELD_DEFAULTS={hold:30,reps:10,sets:2};
 function fields(mod){
  if(!mod)return{hold:false,reps:false,sets:false};
+ if(mod.t==="ex"){
+  if(mod.hold!=null||mod.reps!=null||mod.sets!=null)
+   return{hold:mod.hold!=null,reps:mod.reps!=null,sets:true};
+  return{hold:false,reps:true,sets:true};
+ }
  if(mod.hold!=null||mod.reps!=null||mod.sets!=null)
   return{hold:mod.hold!=null,reps:mod.reps!=null,sets:mod.sets!=null};
- return mod.t==="st"?{hold:true,reps:false,sets:false}:{hold:false,reps:true,sets:true};}
+ return{hold:true,reps:false,sets:false};}
 
 function suggest(mod){
  const last=lastLogFor(mod.id);
@@ -630,46 +650,70 @@ function suggest(mod){
  if(mod.eq==="db")sug.weight=last&&last.weight?last.weight:null;
  if(mod.eq==="loop"||mod.eq==="handle")sug.band=last&&last.band?last.band:null;
  if(!last)return sug;
- /* no weight or band lever available - progress whichever field is switched on */
- const bump=dir=>{
-  if(F.reps){
-   const step=(dir>0)?(last.diff==="se"?1:2):-2;
-   sug.reps=Math.max((last.reps||sug.reps||FIELD_DEFAULTS.reps)+step,1);
-   sug.note=dir>0?(last.diff==="se"?"was somewhat easy - add a rep":"was way too easy - add reps")
-                 :"was way too hard - fewer reps";
-   return true;
+ const easy=last.diff==="wte"||last.diff==="se",hard=last.diff==="wth";
+ if(!easy&&!hard)return sug; // just right / somewhat hard - hold steady, no change
+ sug.dir=easy?1:-1;
+ if(F.reps){
+  /* double progression: climb reps within [lo,hi] on easy sessions; only after
+     reaching hi does the load lever (weight/band/sets) move, resetting reps to
+     lo. Symmetrically, only after dropping to lo does a hard session ease the
+     load lever instead of pushing reps below it. */
+  const lo=mod.reps||FIELD_DEFAULTS.reps,hi=lo+REP_RANGE_SPAN;
+  const cur=sug.reps;
+  if(easy){
+   if(cur<hi){
+    sug.reps=Math.min(cur+(last.diff==="wte"?3:2),hi);
+    sug.note="was easy - up to "+sug.reps+" reps (aiming for "+hi+" before the next step up)";
+   }else{
+    sug.reps=lo;
+    if(mod.eq==="db"&&last.weight){
+     sug.weight=last.weight+2.5;
+     sug.note="hit "+hi+" reps - weight up to "+sug.weight+" lb, back to "+lo+" reps";
+    }else if((mod.eq==="loop"||mod.eq==="handle")&&last.band){
+     const nb=nextBand(last.band,1);
+     if(nb){sug.band=nb;sug.note="hit "+hi+" reps - next band up, back to "+lo+" reps";}
+     else if(F.sets&&(sug.sets||FIELD_DEFAULTS.sets)<MAX_SETS){
+      sug.sets=(sug.sets||FIELD_DEFAULTS.sets)+1;
+      sug.note=S.settings.bandOrderSet?"hit "+hi+" reps, top band - add a set instead, back to "+lo+" reps"
+                                       :"hit "+hi+" reps, top band - add a set (set band order in Settings for band suggestions), back to "+lo+" reps";
+     }else{sug.reps=hi;sug.note="hit "+hi+" reps - top band already, hold here";}
+    }else if(F.sets&&(sug.sets||FIELD_DEFAULTS.sets)<MAX_SETS){
+     sug.sets=(sug.sets||FIELD_DEFAULTS.sets)+1;
+     sug.note="hit "+hi+" reps - add a set, back to "+lo+" reps";
+    }else{sug.reps=hi;sug.note="hit "+hi+" reps - hold here, great work";}
+   }
+  }else{
+   if(cur>lo){
+    sug.reps=Math.max(cur-2,lo);
+    sug.note="was too hard - back to "+sug.reps+" reps";
+   }else if(mod.eq==="db"&&last.weight){
+    sug.weight=Math.max(last.weight-2.5,0);
+    sug.note="too hard even at "+lo+" reps - weight down to "+sug.weight+" lb";
+   }else if((mod.eq==="loop"||mod.eq==="handle")&&last.band){
+    const pb=nextBand(last.band,-1);
+    if(pb){sug.band=pb;sug.note="too hard even at "+lo+" reps - band down";}
+    else sug.note="too hard even at "+lo+" reps - lightest band already";
+   }else if(F.sets&&(sug.sets||FIELD_DEFAULTS.sets)>1){
+    sug.sets=Math.max((sug.sets||FIELD_DEFAULTS.sets)-1,1);
+    sug.note="too hard even at "+lo+" reps - drop a set";
+   }else{
+    sug.note="too hard even at "+lo+" reps - consider an easier variation";
+   }
   }
-  if(F.hold){
-   const h=stepHold(sug.hold,dir,HL);
-   if(h!==sug.hold){sug.hold=h;sug.note=dir>0?"was easy - longer hold":"was too hard - shorter hold";return true;}
-   if(dir>0&&F.sets){sug.sets=(sug.sets||FIELD_DEFAULTS.sets)+1;sug.note="was easy - add a set";return true;}
-   sug.note=dir>0?"was easy - make it harder":"was too hard - ease off";return true;
-  }
-  if(F.sets){
-   sug.sets=Math.max((sug.sets||FIELD_DEFAULTS.sets)+(dir>0?1:-1),1);
-   sug.note=dir>0?"was easy - add a set":"was too hard - drop a set";return true;
-  }
-  sug.note=dir>0?"was easy - make it harder":"was too hard - ease off";return true;
- };
- if(last.diff==="wte"||last.diff==="se"){
-  sug.dir=1;
-  if(mod.eq==="db"&&last.weight&&last.diff==="wte"){sug.weight=last.weight+2.5;sug.note="was way too easy - weight up";}
-  else if((mod.eq==="loop"||mod.eq==="handle")&&last.band&&last.diff==="wte"){
-   const nb=nextBand(last.band,1);
-   if(nb){sug.band=nb;sug.note="was way too easy - next band up";}
-   else{bump(1);if(F.reps)sug.note=S.settings.bandOrderSet?"was way too easy - top band, add reps":"was way too easy - add reps (set band order in Settings for band suggestions)";}
-  }
-  else bump(1);
- }else if(last.diff==="wth"){
-  sug.dir=-1;
-  if(mod.eq==="db"&&last.weight){sug.weight=Math.max(last.weight-2.5,0);sug.note="was way too hard - weight down";}
-  else if((mod.eq==="loop"||mod.eq==="handle")&&last.band){
-   const pb=nextBand(last.band,-1);
-   if(pb){sug.band=pb;sug.note="was way too hard - band down";}
-   else bump(-1);
-  }
-  else bump(-1);
+  return sug;
  }
+ /* isometric hold-only exercises (no reps tracked): step the hold ladder, then sets */
+ if(F.hold){
+  const h=stepHold(sug.hold,sug.dir,HL);
+  if(h!==sug.hold){sug.hold=h;sug.note=easy?"was easy - longer hold":"was too hard - shorter hold";return sug;}
+  if(easy&&F.sets){sug.sets=(sug.sets||FIELD_DEFAULTS.sets)+1;sug.note="was easy - add a set";return sug;}
+  sug.note=easy?"was easy - hold here":"was too hard - ease off";return sug;
+ }
+ if(F.sets){
+  sug.sets=Math.max((sug.sets||FIELD_DEFAULTS.sets)+(easy?1:-1),1);
+  sug.note=easy?"was easy - add a set":"was too hard - drop a set";return sug;
+ }
+ sug.note=easy?"was easy - hold here":"was too hard - ease off";
  return sug;
 }
 function lastLine(mod){
@@ -1086,24 +1130,43 @@ function targetLabel(mod){
  else if(mod.sets)b.push(mod.sets+" sets");
  if(mod.hold)b.push(fmtHold(mod.hold)+" hold");
  return b.join(", ")+(b.length?sideSuffix(mod):"");}
+let LIB_M=null; /* null = region menu; else the selected muscle id */
 function renderLibrary(){
- let h='<div class="note">Tap a module to edit it - switch on the fields it needs (hold time, reps, sets) and set their starting values. Hidden modules are never picked for the daily list.</div>';
+ if(!LIB_M){renderLibraryMenu();return;}
+ if(!MUSCLES.some(m=>m.id===LIB_M)){LIB_M=null;renderLibraryMenu();return;}
+ renderLibraryRegion(LIB_M);
+}
+function renderLibraryMenu(){
+ let h='<div class="note">Tap a body region to see and edit its exercises and stretches.</div>';
  for(const mu of MUSCLES){
-  h+='<h3 class="sec">'+esc(mu.name)+'</h3>';
   const mods=getLib(true).filter(x=>x.m===mu.id);
-  for(const mod of mods){
-   const hid=S.lib.hidden.includes(mod.id);
-   h+='<div class="librow'+(hid?" hidden-mod":"")+'">';
-   h+='<div class="info" data-edit="'+esc(mod.id)+'"><div class="n">'+esc(mod.name)+'</div>';
-   let dbits=[(mod.t==="st"?"Stretch":"Exercise"),esc(EQ[mod.eq]||mod.eq)];
-   if(mod.bs)dbits.push("Both sides");
-   const tgt=targetLabel(mod);if(tgt)dbits.push(tgt);
-   h+='<div class="d">'+dbits.join(" &middot; ")+'</div></div>';
-   h+='<button class="btn-sm" data-hide="'+esc(mod.id)+'">'+(hid?"Unhide":"Hide")+'</button></div>';
-  }
-  h+='<button class="btn-sm" style="margin-top:6px" data-add="'+mu.id+'">+ Add to '+esc(mu.name)+'</button>';
+  const hidCount=mods.filter(x=>S.lib.hidden.includes(x.id)).length;
+  h+='<div class="librow region" data-region="'+mu.id+'"><div class="info"><div class="n">'+esc(mu.name)+'</div>';
+  h+='<div class="d">'+mods.length+' module'+(mods.length===1?"":"s")+(hidCount?" &middot; "+hidCount+" hidden":"")+'</div></div>';
+  h+='<span aria-hidden="true" style="color:var(--sub);font-size:19px">&#8250;</span></div>';
  }
  $("#view").innerHTML=h;
+ $("#view").querySelectorAll("[data-region]").forEach(row=>row.onclick=()=>{
+  LIB_M=row.getAttribute("data-region");render();window.scrollTo(0,0);});
+}
+function renderLibraryRegion(muId){
+ const mu=MUSCLES.find(x=>x.id===muId);
+ let h='<button class="btn-sm" id="lib-back">&larr; All regions</button>';
+ h+='<h3 class="sec">'+esc(mu?mu.name:"")+'</h3>';
+ const mods=getLib(true).filter(x=>x.m===muId);
+ for(const mod of mods){
+  const hid=S.lib.hidden.includes(mod.id);
+  h+='<div class="librow'+(hid?" hidden-mod":"")+'">';
+  h+='<div class="info" data-edit="'+esc(mod.id)+'"><div class="n">'+esc(mod.name)+'</div>';
+  let dbits=[(mod.t==="st"?"Stretch":"Exercise"),esc(EQ[mod.eq]||mod.eq)];
+  if(mod.bs)dbits.push("Both sides");
+  const tgt=targetLabel(mod);if(tgt)dbits.push(tgt);
+  h+='<div class="d">'+dbits.join(" &middot; ")+'</div></div>';
+  h+='<button class="btn-sm" data-hide="'+esc(mod.id)+'">'+(hid?"Unhide":"Hide")+'</button></div>';
+ }
+ h+='<button class="btn-sm" style="margin-top:6px" data-add="'+muId+'">+ Add to '+esc(mu?mu.name:"")+'</button>';
+ $("#view").innerHTML=h;
+ $("#lib-back").onclick=()=>{LIB_M=null;render();window.scrollTo(0,0);};
  $("#view").querySelectorAll("[data-hide]").forEach(b=>b.onclick=()=>{
   const id=b.getAttribute("data-hide");
   const i=S.lib.hidden.indexOf(id);
@@ -1131,20 +1194,30 @@ function openModEditor(id,muscle){
    +'<b>'+label+'</b>'
    +'<input type="number" inputmode="numeric" min="1" id="e_'+key+'" value="'+val+'"'+(on?"":" disabled")+'>'
    +'<span>'+unit+'</span></label>';};
- h+='<div class="note">Switch on the fields this one needs. Only these show up when you check it off.</div>';
+ const fixedRow=(key,label,unit)=>{
+  const val=(mod[key]!=null&&mod[key]!=="")?mod[key]:FIELD_DEFAULTS[key];
+  return '<label class="ftog" data-ftog="'+key+'">'
+   +'<b>'+label+'</b>'
+   +'<input type="number" inputmode="numeric" min="1" id="e_'+key+'" value="'+val+'">'
+   +'<span>'+unit+'</span></label>';};
+ h+='<div class="note">Sets are tracked for every exercise. Switch on hold time and/or reps if this one needs them too.</div>';
  h+=fieldRow("hold","Hold time","sec");
  h+=fieldRow("reps","Reps","per set");
- h+=fieldRow("sets","Sets","");
+ h+=(mod.t==="ex")?fixedRow("sets","Sets",""):fieldRow("sets","Sets","");
  h+='<label class="checkline"><input type="checkbox" id="e_bs"'+(mod.bs?" checked":"")+'><b>Both sides</b><span>do it left and right; sets, reps and hold are per side</span></label>';
  h+='<div class="field"><label>Form cues (one per line)</label><textarea id="e_cues" rows="3">'+esc((mod.cues||[]).join("\n"))+'</textarea></div>';
  h+='<div class="field"><label>YouTube search phrase</label><input type="text" id="e_yt" value="'+esc(mod.yt||"")+'"></div>';
  h+='<button class="btn-primary" id="e_save">Save</button>';
  if(id&&S.lib.custom.some(c=>c.id===id))h+='<button class="btn-ghost btn-danger" style="color:#fff" id="e_del">Delete custom module</button>';
  showModal(h);
- /* each field is stored only while its checkbox is on; blank falls back to the default */
+ /* each toggleable field is stored only while its checkbox is on; a field with no
+    checkbox (sets, on exercises) is fixed on and always stored. Blank falls back
+    to the default. */
  const fieldVal=key=>{
-  const cb=$("#e_"+key+"_on");if(!cb||!cb.checked)return null;
-  const el=$("#e_"+key),v=el?(el.value||"").trim():"";
+  const cb=$("#e_"+key+"_on");
+  if(cb&&!cb.checked)return null;
+  const el=$("#e_"+key);if(!el)return null;
+  const v=(el.value||"").trim();
   const n=parseInt(v,10);
   return(!v||isNaN(n)||n<1)?FIELD_DEFAULTS[key]:n;};
  $("#modal").querySelectorAll("[data-fchk]").forEach(cb=>cb.onchange=()=>{
@@ -1225,9 +1298,11 @@ function render(){
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
  TAB=b.getAttribute("data-tab");
+ if(TAB==="library")LIB_M=null;
  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));
- stopTimer();render();});
+ stopTimer();render();window.scrollTo(0,0);});
 render();
+window.scrollTo(0,0);
 </script>
 </body>
 </html>
