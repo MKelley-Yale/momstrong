@@ -14,7 +14,9 @@
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);color-scheme:dark;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;}
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;
+  overflow-anchor:none;}
+main,#view{overflow-anchor:none;}
 body{padding-bottom:70px;}
 header{padding:10px 14px 4px;display:flex;align-items:baseline;justify-content:space-between;}
 header h1{font-size:18px;margin:0;letter-spacing:.3px;}
@@ -177,8 +179,12 @@ const MUSCLES=[
  {id:"biceps",name:"Biceps"},{id:"triceps",name:"Triceps"},{id:"core",name:"Core"},
  {id:"glutes",name:"Glutes"},{id:"quads",name:"Quads"},{id:"hams",name:"Hamstrings"},
  {id:"calves",name:"Calves"},{id:"neck",name:"Neck & Upper Back"},
- {id:"hipflex",name:"Hip Flexors"},{id:"groin",name:"Groin (Adductors)"},{id:"itband",name:"IT Band / Outer Hip"},
- {id:"pelvic",name:"Pelvic Floor & Deep Core"},{id:"forearm",name:"Forearms & Wrists"},{id:"ankle",name:"Ankles"}];
+ {id:"hipflex",name:"Hip Flexors"},
+ {id:"pelvic",name:"Groin, Pelvic Floor & Deep Core"},{id:"itband",name:"IT Band / Outer Hip"},
+ {id:"forearm",name:"Ankles, Forearms & Wrists"}];
+/* Muscle groups merged in v1.2. Old ids are rewritten on load (see load()) so
+   existing logs, frozen days and custom modules follow their group. */
+const MUSCLE_MERGE={groin:"pelvic",ankle:"forearm"};
 const EQ={none:"No equipment",loop:"Loop band",handle:"Handle band",db:"Dumbbell"};
 const BUILTIN=[
 // CHEST
@@ -428,11 +434,11 @@ const BUILTIN=[
 // GROIN (ADDUCTORS)
 
 
-{id:"gr1",m:"groin",t:"st",hold:30,name:"Seated Butterfly Stretch",eq:"none",yt:"butterfly stretch groin adductor how to",
+{id:"gr1",m:"pelvic",t:"st",hold:30,name:"Seated Butterfly Stretch",eq:"none",yt:"butterfly stretch groin adductor how to",
  cues:["Sit tall, soles of feet together, knees fall open","Hold ankles or feet, sit up straight","Gently press knees down with elbows - never force","Hinge forward from hips only as far as comfortable"]},
 
 
-{id:"gr2",m:"groin",t:"st",bs:true,hold:30,name:"Standing Side Lunge (Adductor Stretch)",eq:"none",yt:"standing side lunge groin adductor stretch how to",
+{id:"gr2",m:"pelvic",t:"st",bs:true,hold:30,name:"Standing Side Lunge (Adductor Stretch)",eq:"none",yt:"standing side lunge groin adductor stretch how to",
  cues:["Wide stance, toes pointed forward","Shift weight into one bent knee, keep other leg straight","Both feet stay flat on floor, chest up","Feel it on the inner thigh of the straight leg - both sides"]},
 // IT BAND / OUTER HIP
 
@@ -472,11 +478,11 @@ const BUILTIN=[
 // ANKLES
 
 
-{id:"an1",m:"ankle",t:"st",bs:true,hold:30,name:"Kneeling Ankle Dorsiflexion Stretch",eq:"none",yt:"kneeling ankle dorsiflexion stretch knee to wall",
+{id:"an1",m:"forearm",t:"st",bs:true,hold:30,name:"Kneeling Ankle Dorsiflexion Stretch",eq:"none",yt:"kneeling ankle dorsiflexion stretch knee to wall",
  cues:["Kneel with one foot flat in front, knee over ankle","Keep heel down, drive knee forward over toes","Stop when heel wants to lift","Both sides"]},
 
 
-{id:"an2",m:"ankle",t:"st",hold:30,name:"Top-of-Foot Stretch (Kneeling)",eq:"none",yt:"top of foot ankle stretch kneeling",
+{id:"an2",m:"forearm",t:"st",hold:30,name:"Top-of-Foot Stretch (Kneeling)",eq:"none",yt:"top of foot ankle stretch kneeling",
  cues:["Kneel and sit back onto heels, tops of feet flat on floor","Ease weight back gently, use hands for support if needed","Stop at a mild stretch across top of foot/ankle","Come up slowly"]}
 ];
 /* ===== Utils ===== */
@@ -503,7 +509,17 @@ function load(){try{const r=localStorage.getItem(KEY);if(!r)return null;const s=
  s.settings.bandOrder=s.settings.bandOrder||DEFAULT_BANDS.slice();
  s.settings.bandOrderSet=!!s.settings.bandOrderSet;
  s.lib=s.lib||{};s.lib.custom=s.lib.custom||[];s.lib.hidden=s.lib.hidden||[];s.lib.edits=s.lib.edits||{};
+ migrateMuscles(s);
  return s;}catch(e){return null;}}
+/* Rewrite retired muscle ids wherever state stores one, so history, frozen days
+   and custom/edited modules land in the merged group instead of vanishing. */
+function migrateMuscles(s){
+ const map=MUSCLE_MERGE,fix=o=>{if(o&&map[o.m])o.m=map[o.m];};
+ s.logs.forEach(fix);
+ for(const d in s.days){const day=s.days[d];if(day&&day.items)day.items.forEach(fix);}
+ s.lib.custom.forEach(fix);
+ for(const id in s.lib.edits)fix(s.lib.edits[id]);
+}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){alert("Could not save data: "+e.message);}}
 S=load()||freshState();
 
@@ -532,9 +548,14 @@ function daysSince(dateStr,ref){return dateStr==null?Infinity:daysBetween(dateSt
    - muscles not checked off (any item) in 3+ days float to the top tier
    - deterministic per date, frozen once generated */
 const STALE_CAP_DAYS=21;
-function ensureDay(date){
+/* `roll` salts the seed so a re-roll produces a genuinely different list while
+   staying deterministic: the same date at the same roll count always rebuilds
+   the same day. roll 0 uses the original seed, so days generated before this
+   existed regenerate byte-identically. */
+function ensureDay(date,roll){
  if(S.days[date]&&S.days[date].items&&S.days[date].items.length)return S.days[date];
- const rng=mulberry32(hashStr(date+"|momstrong"));
+ const n=roll||0;
+ const rng=mulberry32(hashStr(date+"|momstrong"+(n?"|r"+n:"")));
  const lib=getLib(false);
  const picks=[],meta=[];
  for(const mu of MUSCLES){
@@ -577,11 +598,17 @@ function ensureDay(date){
   (daysSince(lastDate(l=>l.m===p.m),date)>=3?overdue:recent).push(p);
  }
  const items=shuffle(overdue,rng).concat(shuffle(recent,rng));
- S.days[date]={items:items};
+ S.days[date]={items:items,roll:n};
  save();
  return S.days[date];
 }
-function rerollToday(){const d=todayStr();delete S.days[d];save();ensureDay(d);render();}
+function rerollToday(){
+ const d=todayStr();
+ const next=((S.days[d]&&S.days[d].roll)||0)+1;
+ delete S.days[d];save();
+ ensureDay(d,next);
+ render();
+}
 
 /* ===== Suggestion engine =====
    exercise diff: wte, se, jr, sh, wth
@@ -1147,7 +1174,7 @@ function renderLibraryMenu(){
  }
  $("#view").innerHTML=h;
  $("#view").querySelectorAll("[data-region]").forEach(row=>row.onclick=()=>{
-  LIB_M=row.getAttribute("data-region");render();window.scrollTo(0,0);});
+  LIB_M=row.getAttribute("data-region");toTop();render();toTopHard();});
 }
 function renderLibraryRegion(muId){
  const mu=MUSCLES.find(x=>x.id===muId);
@@ -1166,7 +1193,7 @@ function renderLibraryRegion(muId){
  }
  h+='<button class="btn-sm" style="margin-top:6px" data-add="'+muId+'">+ Add to '+esc(mu?mu.name:"")+'</button>';
  $("#view").innerHTML=h;
- $("#lib-back").onclick=()=>{LIB_M=null;render();window.scrollTo(0,0);};
+ $("#lib-back").onclick=()=>{LIB_M=null;toTop();render();toTopHard();};
  $("#view").querySelectorAll("[data-hide]").forEach(b=>b.onclick=()=>{
   const id=b.getAttribute("data-hide");
   const i=S.lib.hidden.indexOf(id);
@@ -1282,12 +1309,28 @@ function renderSettings(){
   const r=new FileReader();
   r.onload=()=>{try{const s=JSON.parse(r.result);
    if(!s.logs||!s.settings)throw new Error("not a MOMstrong backup");
+   s.days=s.days||{};s.lib=s.lib||{};s.lib.custom=s.lib.custom||[];s.lib.edits=s.lib.edits||{};
+   migrateMuscles(s);
    S=s;save();alert("Restored!");render();}catch(err){alert("Restore failed: "+err.message);}};
   r.readAsText(f);};
  $("#wipe").onclick=()=>{if(confirm("Erase ALL logs and settings? Export a backup first!")&&confirm("Really erase everything?")){S=freshState();save();render();}};
 }
 
 /* ===== Nav, init ===== */
+/* Force the viewport back to the very top. Called both before and after a
+   re-render: zeroing the offset *before* the DOM swap stops the browser's
+   scroll-anchoring from restoring an offset once the new layout settles, and
+   the rAF passes re-assert it after late layout (fonts, safe-area insets). */
+function toTop(){
+ try{window.scrollTo(0,0);}catch(e){}
+ document.documentElement.scrollTop=0;
+ document.body.scrollTop=0;
+}
+function toTopHard(){
+ toTop();
+ requestAnimationFrame(()=>{toTop();requestAnimationFrame(toTop);});
+ setTimeout(toTop,60);
+}
 function render(){
  if(TAB==="today")renderToday();
  else if(TAB==="cal")renderCal();
@@ -1300,9 +1343,13 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
  TAB=b.getAttribute("data-tab");
  if(TAB==="library")LIB_M=null;
  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));
- stopTimer();render();window.scrollTo(0,0);});
+ if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+ stopTimer();toTop();render();toTopHard();});
+if("scrollRestoration" in history)history.scrollRestoration="manual";
 render();
-window.scrollTo(0,0);
+toTopHard();
+window.addEventListener("load",toTopHard);
+window.addEventListener("pageshow",toTopHard);
 </script>
 </body>
 </html>
