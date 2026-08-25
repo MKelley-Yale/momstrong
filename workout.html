@@ -71,7 +71,13 @@ details.cues li{margin-bottom:2px;}
 details.cues.notesd{display:block;margin-left:8px;}
 details.cues.notesd summary{display:inline-block;}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-button{font-family:inherit;border:none;border-radius:10px;cursor:pointer;font-size:15px;}
+button{font-family:inherit;border:none;border-radius:10px;cursor:pointer;font-size:15px;
+  transition:filter .06s,transform .06s;}
+button:active{filter:brightness(1.35);transform:scale(.97);}
+#reroll.rr-armed{background:var(--gold);color:#1a1a1a;font-weight:600;}
+.rr-ok{margin:8px 0 0;padding:9px 11px;background:var(--accent-soft);
+  border:1px solid var(--accent);border-radius:10px;color:var(--accent);font-size:13px;line-height:1.4;}
+.rr-ok b{color:var(--ink);}
 .timer{margin:4px 0 1px;padding:4px 6px;background:var(--bg);border:1px solid var(--line);
   border-radius:9px;display:flex;align-items:center;gap:7px;}
 .timer select{padding:4px 4px;border:1px solid var(--line);border-radius:7px;font-size:13px;
@@ -602,12 +608,14 @@ function ensureDay(date,roll){
  save();
  return S.days[date];
 }
+/* Returns the newly generated day so the caller can report what changed.
+   Deliberately does NOT render - the caller renders once, after setting up
+   whatever confirmation it wants to show. */
 function rerollToday(){
  const d=todayStr();
  const next=((S.days[d]&&S.days[d].roll)||0)+1;
  delete S.days[d];save();
- ensureDay(d,next);
- render();
+ return ensureDay(d,next);
 }
 
 /* ===== Suggestion engine =====
@@ -1283,7 +1291,11 @@ function renderSettings(){
  h+='<button class="btn-sm" id="addband">Add</button></div>';
  h+='<button class="btn-primary" style="margin-top:10px" id="saveorder">Save order</button>';
  h+='<h3 class="sec">Today</h3>';
- h+='<button class="btn-sm" id="reroll">Re-roll today\'s list</button><div class="note">Generates a new random selection for today. Completed items stay logged.</div>';
+ h+='<button class="btn-sm'+(REROLL_ARMED?" rr-armed":"")+'" id="reroll">'+
+   (REROLL_ARMED?"Tap again to confirm":"Re-roll today&rsquo;s list")+'</button>';
+ if(REROLL_ARMED)h+='<div class="note">Tap the gold button to go ahead, or wait 5 seconds to cancel.</div>';
+ else if(REROLL_RECEIPT)h+='<div class="rr-ok">'+REROLL_RECEIPT+'</div>';
+ else h+='<div class="note">Generates a new random selection for today. Completed items stay logged.</div>';
  h+='<h3 class="sec">Backup</h3>';
  h+='<div class="note">iPhone can clear browser data. Back up regularly - it saves a small file you can restore from.</div>';
  h+='<div class="row"><button class="btn-sm" id="exportbtn">Export backup</button>';
@@ -1298,7 +1310,24 @@ function renderSettings(){
  $("#view").querySelectorAll("[data-bx]").forEach(b=>b.onclick=()=>{S.settings.bandOrder.splice(+b.getAttribute("data-bx"),1);reorder();});
  $("#addband").onclick=()=>{const v=$("#newband").value.trim().toLowerCase();if(v&&!S.settings.bandOrder.includes(v)){S.settings.bandOrder.push(v);reorder();}};
  $("#saveorder").onclick=()=>{S.settings.bandOrderSet=true;save();renderSettings();};
- $("#reroll").onclick=()=>{if(confirm("Re-roll today's list?"))rerollToday();};
+ /* Two-tap confirm rather than confirm(): a native dialog is unreliable in an
+    iOS home-screen web app, where a suppressed prompt makes the button look dead. */
+ $("#reroll").onclick=()=>{
+  if(!REROLL_ARMED){
+   REROLL_ARMED=true;REROLL_RECEIPT=null;renderSettings();
+   clearTimeout(REROLL_TIMER);
+   REROLL_TIMER=setTimeout(()=>{
+    if(REROLL_ARMED){REROLL_ARMED=false;if(TAB==="settings")renderSettings();}},5000);
+   return;
+  }
+  clearTimeout(REROLL_TIMER);REROLL_ARMED=false;
+  const day=rerollToday();
+  const t=new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+  REROLL_RECEIPT='&#10003; New list generated at <b>'+esc(t)+'</b> &middot; roll #<b>'+day.roll+
+   '</b> &middot; <b>'+day.items.length+'</b> items ('+day.items.filter(i=>i.t==="ex").length+
+   ' exercises). Open the Today tab to see it.';
+  renderSettings();
+ };
  $("#exportbtn").onclick=()=>{
   const blob=new Blob([JSON.stringify(S)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
@@ -1315,6 +1344,9 @@ function renderSettings(){
   r.readAsText(f);};
  $("#wipe").onclick=()=>{if(confirm("Erase ALL logs and settings? Export a backup first!")&&confirm("Really erase everything?")){S=freshState();save();render();}};
 }
+
+/* Re-roll confirm state, module-level so it survives renderSettings(). */
+let REROLL_ARMED=false,REROLL_RECEIPT=null,REROLL_TIMER=null;
 
 /* ===== Nav, init ===== */
 /* Force the viewport back to the very top. Called both before and after a
@@ -1342,6 +1374,7 @@ function render(){
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
  TAB=b.getAttribute("data-tab");
  if(TAB==="library")LIB_M=null;
+ clearTimeout(REROLL_TIMER);REROLL_ARMED=false;REROLL_RECEIPT=null;
  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));
  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
  stopTimer();toTop();render();toTopHard();});
